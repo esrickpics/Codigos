@@ -1,0 +1,23 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container">
+    <div class="row">
+       <div class="col-md-4 offset-md-4">
+          <form  method="post" class="card card-body mt-5">
+            <h2 class="text-center">Login</h2>
+            {% csrf_token %}
+            {{ form.as_table }}
+            {% if error %}
+              <p class="text-danger mt-1">{{ error }}</p>
+            {% endif %}
+            <button type="submit" class="btn btn-primary mt-3">
+                Iniciar Sesión
+            </button>
+       </div>
+    </form>
+    </div>
+</main>
+
+{% endblock %}

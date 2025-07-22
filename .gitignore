@@ -1,0 +1,33 @@
+# created by virtualenv automatically
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+*.env
+
+# SQLite database (si usas SQLite)
+db.sqlite3
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+media
+/staticfiles
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# MacOS
+.DS_Store
+
+# Virtual environment
+venv/
+env/

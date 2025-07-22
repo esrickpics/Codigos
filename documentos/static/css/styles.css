@@ -1,0 +1,126 @@
+:root {
+    --e-global-color-red: #ed2546;
+    --e-global-color-moradopaldaca: #32407b;
+    --e-global-color-azulmarino: #141644;
+    --e-global-color-azul: #282c89;
+ }
+
+.logoheader {
+    max-width: 100%;
+    height: auto;
+    max-height: 50px;
+    margin-left: 10px;
+}
+
+.linea {
+    border-top: 1px solid #ccc;
+    margin: 20px 0;
+    color: #000;
+}
+
+.form-container {
+    background-color: #f8f8f8; /* Color de fondo gris */
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 1200px; /* Ajustar el tamaño máximo */
+    margin: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 180px;
+}
+
+/* Título del formulario */
+.form-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--e-global-color-moradopaldaca);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.btnlogout {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 45px;
+    height: 45px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition-duration: .3s;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+    background-color: #ed2546;
+}
+
+/* plus sign */
+.sign {
+    width: 100%;
+    transition-duration: .3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .sign svg {
+        width: 17px;
+    }
+
+        .sign svg path {
+            fill: white;
+        }
+/* text */
+.text {
+    position: absolute;
+    right: 0%;
+    width: 0%;
+    opacity: 0;
+    color: white;
+    font-size: 1.2em;
+    font-weight: 600;
+    transition-duration: .3s;
+}
+/* hover effect on button width */
+.btnlogout:hover {
+    width: 125px;
+    border-radius: 40px;
+    transition-duration: .3s;
+}
+
+    .btnlogout:hover .sign {
+        width: 30%;
+        transition-duration: .3s;
+        padding-left: 20px;
+    }
+    /* hover effect button's text */
+    .btnlogout:hover .text {
+        opacity: 1;
+        width: 70%;
+        transition-duration: .3s;
+        padding-right: 10px;
+    }
+/* button click effect*/
+.btnlogout:active {
+    transform: translate(2px,2px);
+}
+@media (max-width: 767px) {
+   
+/* Contenedor principal */
+.form-container {
+    padding: 20px;
+    max-width: 100%; 
+    margin: 20px auto;
+}
+    /* Título del formulario */
+    .form-title {
+        font-size: 20px;
+    }
+    .btnlogout {
+        width: 40px;
+        height: 40px;
+    }
+    .btnlogout:hover {
+        width: 100px;
+    }
+}

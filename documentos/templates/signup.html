@@ -1,0 +1,25 @@
+<!-- templates/generador_codigo.html -->
+{% extends 'index.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<main class="container">
+    <div class="row">
+       <section class="col-md-4 offset-md-4">
+          <form  method="post" class="card card-body mt-5">
+                <h2 class="text-center">Registro</h2>
+                {% csrf_token %}
+                {{ form.as_table }}
+                {% if error %}
+                <p class="text-danger mt-1">{{ error }}</p>
+                {% endif %}
+                <button type="submit" class="btn btn-primary mt-3">
+                    Registrarse
+                </button>
+            </form>
+        </section>
+    </div> 
+</main>
+{% endblock %}

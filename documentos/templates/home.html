@@ -1,0 +1,24 @@
+<!-- templates/generador_codigo.html -->
+{% extends 'index.html' %}
+
+{% block content %}
+
+<main class="container mt-5">
+    <div class="row">
+       <section class="col-md-4 offset-md-4">
+            <h1 class="text-center mt-5" style="color: #32407b;">Bienvenido</h1>
+            <ul class="list-group mt-3">
+            <li class="list-group-item">
+                  <a href="/Codigos">Historial de Codigos</a>
+            </li>
+            <li class="list-group-item">
+                  <a href="/BuscarCodigo">Buscador de Codigos</a>
+            </li>
+            <li class="list-group-item">
+                  <a href="/generar_codigo">Generar Codigo</a>
+            </li>
+            </ul>
+        </section>
+    </div>
+
+{% endblock %}

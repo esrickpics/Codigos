@@ -1,0 +1,88 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% load widget_tweaks %}
+
+{% block content %} 
+<!-- 📝 Formulario para generar código -->
+<!-- Bootstrap 5 Mejorado: Formulario para generar código -->
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow rounded">
+        <div class="card-header bg-primary text-white text-center rounded-top">
+          <h5 class="mb-0">Generador de Código</h5>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label for="id_empresa" class="form-label"><strong>Empresa:</strong></label>
+              {{ form.empresa|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_año" class="form-label"><strong>Año:</strong></label>
+              {{ form.año|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_numero_proyecto" class="form-label"><strong>Número de Proyecto:</strong></label>
+              {{ form.numero_proyecto|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_subproyecto" class="form-label"><strong>Subproyecto:</strong></label>
+              {{ form.subproyecto|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_departamento" class="form-label"><strong>Departamento:</strong></label>
+              {{ form.departamento|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_disciplina" class="form-label"><strong>Disciplina:</strong></label>
+              {{ form.disciplina|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_tipo_documento" class="form-label"><strong>Tipo de Documento:</strong></label>
+              {{ form.tipo_documento|add_class:"form-select" }}
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">Generar Código</button>
+            </div>
+          </form>
+
+          {% if codigo_generado %}
+            <div class="alert alert-success mt-4 text-center fs-4">
+              <strong>{{ codigo_generado }}</strong>
+            </div>
+          {% endif %}
+
+          {% if error %}
+            <div class="alert alert-danger mt-4 text-center">
+              {{ error }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center mb-5">
+  <a href="{% url 'home' %}" class="btn btn-outline-secondary mt-4 d-inline-flex align-items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5a.5.5 0 0 1 .5.5z"/>
+    </svg>
+    <span>Volver al Inicio</span>
+  </a>
+</div>
+{% endblock %}
