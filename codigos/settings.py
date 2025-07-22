@@ -14,9 +14,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from .db import MYSQL as DATABASES
+from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, 'correo.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -25,11 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-2@j%hivvj^9_-(qs7ej+b7d2d9lmm&!q*)6*$qz)0(!jwy9kf)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-#ALLOWED_HOSTS = ['https://cpaldaca.com/', 'cpaldaca.com']
+ALLOWED_HOSTS = ['https://cpaldaca.com/', 'cpaldaca.com']
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+#ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 
@@ -110,8 +111,9 @@ EMAIL_PORT = 465
 EMAIL_USE_SSL = True         # ✅ Usa SSL ya que el puerto es 465
 EMAIL_USE_TLS = False        # ❌ TLS debe estar desactivado si usas SSL
 EMAIL_HOST_USER = 'admin@cpaldaca.com'
-EMAIL_HOST_PASSWORD = 'AdminPaldaca'  # Asegúrate de que sea exacta
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # Asegúrate de que sea exacta
 DEFAULT_FROM_EMAIL = 'admin@cpaldaca.com'
+print('PASS:', os.getenv('EMAIL_HOST_PASSWORD'))
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

@@ -1,4 +1,4 @@
-"""
+
 MYSQL = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -9,6 +9,7 @@ MYSQL = {
         'PORT': '',
     }
 }
+
 """
 #Configuración de desarrollo local
 MYSQL = {
@@ -21,4 +22,4 @@ MYSQL = {
        'PORT': '3306',         # puerto por defecto de MySQL
     }
 }
-
+"""
