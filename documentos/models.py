@@ -8,8 +8,18 @@ class ContadorCodigo(models.Model):
     ultimo_numero = models.IntegerField(default=0)
 
 
+
+class Empresa(models.Model):
+    sigla = models.CharField(max_length=10, unique=True)
+    nombre = models.CharField(max_length=100)
+    correo_notificacion = models.EmailField()
+
+    def __str__(self):
+        return f"{self.sigla} - {self.nombre}"
+    
+    
 class CodigoGenerado(models.Model):
-    empresa = models.CharField(max_length=3, default='PAL')
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
     año = models.CharField(max_length=4)
     numero_proyecto = models.CharField(max_length=2)
     subproyecto = models.CharField(max_length=1)
@@ -23,3 +33,4 @@ class CodigoGenerado(models.Model):
 
     def __str__(self):
         return self.codigo + ' by ' + str(self.usuario)
+    

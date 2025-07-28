@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.core.mail import send_mail, BadHeaderError
 from .forms import CodigoForm, BusquedaCodigoForm
-from .models import CodigoGenerado
+from .models import CodigoGenerado, Empresa
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta
@@ -67,14 +67,15 @@ def IniciarSesion(request):
             # Redirigir a la página de inicio después del inicio de sesión exitoso
             return redirect('home')
 
-
 @login_required
 def generar_codigo(request):
     codigo_generado = None
     resultado_busqueda = None
     error_formulario = None
+    mostrar_modal = False
+    codigo_previsualizacion = None
 
-    # Búsqueda por código vía GET (desde la barra de búsqueda)
+    # Búsqueda por código (GET)
     codigo_buscado = request.GET.get('buscar_codigo')
     if codigo_buscado:
         if CodigoGenerado.objects.filter(codigo=codigo_buscado).exists():
@@ -82,9 +83,19 @@ def generar_codigo(request):
         else:
             resultado_busqueda = "no_existe"
 
-    # Procesamiento del formulario (POST)
     if request.method == 'POST':
         form = CodigoForm(request.POST)
+
+        # Si se hizo clic en "Cancelar" desde el modal
+        if "cancelar" in request.POST:
+            return render(request, "generador_codigo.html", {
+                "form": form,
+                "codigo_generado": None,
+                "mostrar_modal": False,
+                "codigo_previsualizacion": None,
+                "error": None
+            })
+
         if form.is_valid():
             empresa = form.cleaned_data['empresa']
             año_completo = form.cleaned_data['año']
@@ -95,22 +106,35 @@ def generar_codigo(request):
             disciplina = form.cleaned_data['disciplina']
             tipo_documento = form.cleaned_data['tipo_documento']
 
-            # Buscar códigos existentes con los mismos datos para calcular el consecutivo
+            # Filtrar para calcular el consecutivo
             filtro_existente = CodigoGenerado.objects.filter(
+                empresa=empresa,
                 año=año_completo,
                 numero_proyecto=numero_proyecto,
                 subproyecto=subproyecto,
                 departamento=departamento,
                 disciplina=disciplina,
-                tipo_documento=tipo_documento,
-                empresa=empresa
+                tipo_documento=tipo_documento
             )
             consecutivo = filtro_existente.count() + 1
 
-            codigo = f"{empresa}-{año_dos_digitos}-{numero_proyecto}-{subproyecto}-{departamento}-{disciplina}-{tipo_documento}-{consecutivo:03}"
+            # Generar código completo
+            codigo = f"{empresa.sigla}-{año_dos_digitos}-{numero_proyecto}-{subproyecto}-{departamento}-{disciplina}-{tipo_documento}-{consecutivo:03}"
 
+            # Si no hay confirmación todavía, mostramos modal
+            if 'confirmar' not in request.POST:
+                mostrar_modal = True
+                codigo_previsualizacion = codigo
+                return render(request, 'generador_codigo.html', {
+                    'form': form,
+                    'mostrar_modal': mostrar_modal,
+                    'codigo_previsualizacion': codigo_previsualizacion,
+                    'codigo_generado': None,
+                    'error': None
+                })
+
+            # Si se confirmó, guardamos el código
             try:
-                # Guardar el código generado en la base de datos
                 CodigoGenerado.objects.create(
                     empresa=empresa,
                     año=año_completo,
@@ -121,33 +145,29 @@ def generar_codigo(request):
                     tipo_documento=tipo_documento,
                     consecutivo=consecutivo,
                     codigo=codigo,
-                    usuario=request.user, # cambio
+                    usuario=request.user,
                 )
                 codigo_generado = codigo
 
-                # Intentar enviar el correo
+                # Enviar correo
                 usuario = request.user.username
                 fecha = now().strftime('%d/%m/%Y %H:%M')
-                destino = 'documentos@paldaca.com'  # Cambiar al correo de destino si se desea
+                destino = 'ricardogoitia108@gmail.com'  # o empresa.correo_notificacion
                 asunto = 'Nuevo código generado'
                 mensaje = f"""
-Se ha generado un nuevo código:
-Usuario: {usuario}
-Fecha: {fecha}
-Código: {codigo}
-"""
+                    Se ha generado un nuevo código:
+                    Usuario: {usuario}
+                    Fecha: {fecha}
+                    Código: {codigo}
+                """
+
                 try:
-                    send_mail(
-                        asunto,
-                        mensaje,
-                        'admin@cpaldaca.com',
-                        [destino],
-                        fail_silently=False,
-                    )
+                    send_mail(asunto, mensaje, 'admin@cpaldaca.com', [destino], fail_silently=False)
                 except BadHeaderError:
                     error_formulario = "Error: encabezado de correo inválido."
                 except Exception as e:
                     error_formulario = f"El código fue generado, pero el correo no pudo enviarse: {e}"
+
             except Exception as e:
                 error_formulario = f"Ocurrió un error al guardar el código: {e}"
         else:
@@ -159,8 +179,10 @@ Código: {codigo}
         'form': form,
         'codigo_generado': codigo_generado,
         'error': error_formulario,
+        'mostrar_modal': mostrar_modal,
+        'codigo_previsualizacion': codigo_previsualizacion,
+        'resultado_busqueda': resultado_busqueda,
     }
-
     return render(request, 'generador_codigo.html', context)
 
 @login_required
@@ -193,5 +215,9 @@ def buscar_codigo(request):
 
 @login_required
 def lista_codigos(request):
-    codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')
-    return render(request, 'lista_codigos.html', {'codigos': codigos})
+    mostrar_todos = request.GET.get('todos')
+    if mostrar_todos:
+        codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')
+    else:
+        codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')[:15]
+    return render(request, 'lista_codigos.html', {'codigos': codigos, 'mostrar_todos': mostrar_todos})

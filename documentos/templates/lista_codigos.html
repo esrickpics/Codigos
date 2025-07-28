@@ -22,6 +22,9 @@
     {% endfor %}
   </tbody>
 </table>
+{% if not mostrar_todos %}
+  <a href="?todos=1" class="btn btn-secondary mt-3">Ver todos</a>
+{% endif %}
 </div>
 {% endblock %}
 

@@ -1,7 +1,8 @@
-# codigos/forms.py
+ # codigos/forms.py
 from django import forms
 from datetime import datetime
 from django.contrib.auth.models import User
+from .models import Empresa
 
 class BusquedaCodigoForm(forms.Form):
     codigo = forms.CharField(label='Código', required=False)
@@ -45,15 +46,8 @@ class CodigoForm(forms.Form):
         ('DPT', 'Descripción de Puesto de Trabajo'), ('TRN', 'Transmittal'),
         ('GEN', 'Documentos Generales'),
     ]
-    EMPRESAS = [
-    ('PAL', 'Paldaca'),
-    ('SSA', 'SSAPICO'),
-    ('KSP', 'Kinetic Scale Proyectos LDA'),
-    ('OEC', 'Orinoco Energy CA'),
-    ]
 
-
-    empresa = forms.ChoiceField(choices=EMPRESAS, label='Empresa')
+    empresa = forms.ModelChoiceField(queryset=Empresa.objects.all(), label='Empresa')
     año = forms.ChoiceField(choices=AÑOS)
     numero_proyecto = forms.ChoiceField(choices=NUM_PROYECTO)
     subproyecto = forms.ChoiceField(choices=SUBPROYECTOS)

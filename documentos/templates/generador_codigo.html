@@ -85,4 +85,50 @@
     <span>Volver al Inicio</span>
   </a>
 </div>
+
+ {% if mostrar_modal %}
+  <!-- Modal de Previsualización -->
+  <div class="modal fade show" style="display:block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Codigo generado</h5>
+        </div>
+        <div class="modal-body text-center">
+          <p class="mb-3">¿Deseas guardar este código?</p>
+          <h4 class="text-primary">{{ codigo_previsualizacion }}</h4>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="confirmar" value="true">
+            <input type="hidden" name="empresa" value="{{ form.empresa.value }}">
+            <input type="hidden" name="año" value="{{ form.año.value }}">
+            <input type="hidden" name="numero_proyecto" value="{{ form.numero_proyecto.value }}">
+            <input type="hidden" name="subproyecto" value="{{ form.subproyecto.value }}">
+            <input type="hidden" name="departamento" value="{{ form.departamento.value }}">
+            <input type="hidden" name="disciplina" value="{{ form.disciplina.value }}">
+            <input type="hidden" name="tipo_documento" value="{{ form.tipo_documento.value }}">
+            <button type="submit" class="btn btn-success">Confirmar</button>
+          </form>
+
+          <!-- Botón Cancelar que mantiene datos -->
+          <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="cancelar" value="true">
+            <input type="hidden" name="empresa" value="{{ form.empresa.value }}">
+            <input type="hidden" name="año" value="{{ form.año.value }}">
+            <input type="hidden" name="numero_proyecto" value="{{ form.numero_proyecto.value }}">
+            <input type="hidden" name="subproyecto" value="{{ form.subproyecto.value }}">
+            <input type="hidden" name="departamento" value="{{ form.departamento.value }}">
+            <input type="hidden" name="disciplina" value="{{ form.disciplina.value }}">
+            <input type="hidden" name="tipo_documento" value="{{ form.tipo_documento.value }}">
+            <button type="submit" class="btn btn-secondary">Cancelar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+  {% endif %}
 {% endblock %}
