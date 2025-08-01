@@ -29,6 +29,8 @@ urlpatterns = [
     path('Login/', views.IniciarSesion, name='login'),
     path('Codigos/', views.lista_codigos, name='lista_codigos'),
     path('BuscarCodigo/', views.buscar_codigo, name='buscar_codigo'),
+    path('anular_codigo/<int:codigo_id>/', views.anular_codigo, name='anular_codigo'),
+    path('historial_anulaciones/', views.historial_anulaciones, name='historial_anulaciones'),
 ]
 
 if settings.DEBUG:

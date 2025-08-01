@@ -26,14 +26,11 @@ load_dotenv(dotenv_path=os.path.join(BASE_DIR, 'correo.env'))
 SECRET_KEY = 'django-insecure-2@j%hivvj^9_-(qs7ej+b7d2d9lmm&!q*)6*$qz)0(!jwy9kf)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-#ALLOWED_HOSTS = ['https://cpaldaca.com/', 'cpaldaca.com']
+ALLOWED_HOSTS = ['https://cpaldaca.com/', 'cpaldaca.com']
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
-
-
+#ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
@@ -113,7 +110,7 @@ EMAIL_USE_TLS = False        # ❌ TLS debe estar desactivado si usas SSL
 EMAIL_HOST_USER = 'admin@cpaldaca.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') # Asegúrate de que sea exacta
 DEFAULT_FROM_EMAIL = 'admin@cpaldaca.com'
-print('PASS:', os.getenv('EMAIL_HOST_PASSWORD'))
+#print('PASS:', os.getenv('EMAIL_HOST_PASSWORD'))
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

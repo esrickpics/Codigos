@@ -10,6 +10,11 @@
 <form method="get" class="card card-body mt-3">
     {% csrf_token %}
     {{ form.as_p }}
+    
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" id="ver_anulados" name="ver_anulados" {% if request.GET.ver_anulados %}checked{% endif %}>
+      <label class="form-check-label" for="ver_anulados">Incluir códigos anulados</label>
+    </div>
     <button type="submit" class="btn btn-primary">Buscar</button>
 </form>
 
@@ -26,7 +31,13 @@
         <tbody>
         {% for codigo in resultados %}
             <tr>
-                <td>{{ codigo.codigo }}</td>
+                <td>
+                    {% if codigo.anulado %}
+                    <del>{{ codigo.codigo }}</del> <span class="badge bg-danger">Anulado</span>
+                    {% else %}
+                    {{ codigo.codigo }}
+                    {% endif %}
+                </td>
                 <td>{{ codigo.usuario.username }}</td>
                 <td>{{ codigo.fecha_creacion|date:"Y-m-d H:i" }}</td>
             </tr>

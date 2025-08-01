@@ -1,0 +1,32 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5 form-container">
+  <h2 class="text-center mb-4 form-title">Historial de Anulaciones</h2>
+    <table class="table table-striped">
+    <thead>
+        <tr>
+        <th>Código</th>
+        <th>Fecha de Anulación</th>
+        <th>Anulado por</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if anulaciones %}
+        {% for cod in anulaciones %}
+            <tr>
+            <td><del>{{ cod.codigo }}</del></td>
+            <td>{{ cod.fecha_anulacion|date:"d/m/Y H:i" }}</td>
+            <td>{{ cod.usuario_anulacion.username }}</td>
+            </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="3" class="text-center">No hay códigos anulados registrados.</td>
+        </tr>
+        {% endif %}
+    </tbody>
+    </table>
+</div>
+{% endblock %}

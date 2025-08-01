@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.core.mail import send_mail, BadHeaderError
 from .forms import CodigoForm, BusquedaCodigoForm
@@ -152,7 +152,8 @@ def generar_codigo(request):
                 # Enviar correo
                 usuario = request.user.username
                 fecha = now().strftime('%d/%m/%Y %H:%M')
-                destino = 'ricardogoitia108@gmail.com'  # o empresa.correo_notificacion
+                #destino = 'ricardogoitia108@gmail.com'  # Cambiar por la dirección de correo de la empresa
+                destino = empresa.correo_notificacion
                 asunto = 'Nuevo código generado'
                 mensaje = f"""
                     Se ha generado un nuevo código:
@@ -160,7 +161,6 @@ def generar_codigo(request):
                     Fecha: {fecha}
                     Código: {codigo}
                 """
-
                 try:
                     send_mail(asunto, mensaje, 'admin@cpaldaca.com', [destino], fail_silently=False)
                 except BadHeaderError:
@@ -208,6 +208,10 @@ def buscar_codigo(request):
             fecha_fin = datetime.combine(fecha_fin, datetime.max.time())
             resultados = resultados.filter(fecha_creacion__lte=fecha_fin)
 
+        incluir_anulados = request.GET.get('ver_anulados') == 'on'
+        if not incluir_anulados:
+            resultados = resultados.filter(anulado=False)
+
     return render(request, 'buscar_codigo.html', {
         'form': form,
         'resultados': resultados
@@ -221,3 +225,29 @@ def lista_codigos(request):
     else:
         codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')[:15]
     return render(request, 'lista_codigos.html', {'codigos': codigos, 'mostrar_todos': mostrar_todos})
+
+
+@login_required
+def anular_codigo(request, codigo_id):
+    if request.method == 'POST':
+        try:
+            codigo = CodigoGenerado.objects.get(id=codigo_id)
+            if request.user == codigo.usuario or request.user.is_staff:
+                if not codigo.anulado:
+                    codigo.anulado = True
+                    codigo.usuario_anulacion = request.user  
+                    codigo.fecha_anulacion = now()
+                    codigo.save()
+                    return JsonResponse({'success': True})
+                else:
+                    return JsonResponse({'success': False, 'error': 'Ya está anulado'}, status=400)
+            else:
+                return JsonResponse({'success': False, 'error': 'No autorizado'}, status=403)
+        except CodigoGenerado.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Código no encontrado'}, status=404)
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@login_required
+def historial_anulaciones(request):
+    anulaciones = CodigoGenerado.objects.filter(anulado=True).order_by('-fecha_anulacion')
+    return render(request, 'historial_anulaciones.html', {'anulaciones': anulaciones})

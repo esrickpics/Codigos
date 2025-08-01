@@ -8,7 +8,6 @@ class ContadorCodigo(models.Model):
     ultimo_numero = models.IntegerField(default=0)
 
 
-
 class Empresa(models.Model):
     sigla = models.CharField(max_length=10, unique=True)
     nombre = models.CharField(max_length=100)
@@ -30,6 +29,9 @@ class CodigoGenerado(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    anulado = models.BooleanField(default=False)
+    usuario_anulacion = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='anulaciones')
+    fecha_anulacion = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.codigo + ' by ' + str(self.usuario)

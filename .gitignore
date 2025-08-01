@@ -18,7 +18,7 @@ db.sqlite3
 *.pyc
 media
 /staticfiles
-
+/migrations/
 # VSCode
 .vscode/
 
@@ -28,6 +28,6 @@ media
 # MacOS
 .DS_Store
 
-# Virtual environment
+# Virtual environment 
 venv/
 env/
