@@ -68,7 +68,7 @@
 
           {% if error %}
             <div class="alert alert-danger mt-4 text-center">
-              {{ error }}
+            {{ error }}
             </div>
           {% endif %}
         </div>
@@ -76,6 +76,7 @@
     </div>
   </div>
 </div>
+
 
 <div class="text-center mb-5">
   <a href="{% url 'home' %}" class="btn btn-outline-secondary mt-4 d-inline-flex align-items-center gap-2">
@@ -86,21 +87,29 @@
   </a>
 </div>
 
- {% if mostrar_modal %}
+{% if mostrar_modal %}
+ <div class="modal-backdrop fade show"></div>
   <!-- Modal de Previsualización -->
   <div class="modal fade show" style="display:block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Codigo generado</h5>
+          <h5 class="modal-title">Código generado</h5>
         </div>
         <div class="modal-body text-center">
           <p class="mb-3">¿Deseas guardar este código?</p>
           <h4 class="text-primary">{{ codigo_previsualizacion }}</h4>
         </div>
-        <div class="modal-footer justify-content-center">
-          <form method="post" style="display:inline;">
-            {% csrf_token %}
+        
+        <!-- Formulario de Confirmar -->
+        <form method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="motivo" class="form-label"><strong>Motivo / Asunto:</strong></label>
+              <textarea name="motivo" id="motivo" class="form-control" required rows="3" placeholder="Escribe el motivo del código..."></textarea>
+            </div>
+            <!-- Inputs ocultos -->
             <input type="hidden" name="confirmar" value="true">
             <input type="hidden" name="empresa" value="{{ form.empresa.value }}">
             <input type="hidden" name="año" value="{{ form.año.value }}">
@@ -109,26 +118,29 @@
             <input type="hidden" name="departamento" value="{{ form.departamento.value }}">
             <input type="hidden" name="disciplina" value="{{ form.disciplina.value }}">
             <input type="hidden" name="tipo_documento" value="{{ form.tipo_documento.value }}">
-            <button type="submit" class="btn btn-success">Confirmar</button>
-          </form>
+          </div>
 
-          <!-- Botón Cancelar que mantiene datos -->
-          <form method="post" style="display:inline;">
-            {% csrf_token %}
-            <input type="hidden" name="cancelar" value="true">
-            <input type="hidden" name="empresa" value="{{ form.empresa.value }}">
-            <input type="hidden" name="año" value="{{ form.año.value }}">
-            <input type="hidden" name="numero_proyecto" value="{{ form.numero_proyecto.value }}">
-            <input type="hidden" name="subproyecto" value="{{ form.subproyecto.value }}">
-            <input type="hidden" name="departamento" value="{{ form.departamento.value }}">
-            <input type="hidden" name="disciplina" value="{{ form.disciplina.value }}">
-            <input type="hidden" name="tipo_documento" value="{{ form.tipo_documento.value }}">
-            <button type="submit" class="btn btn-secondary">Cancelar</button>
-          </form>
-        </div>
+          <div class="modal-footer justify-content-center d-flex gap-3">
+            <button type="submit" class="btn btn-success">Confirmar</button>
+        </form>
+
+        <!-- Formulario de Cancelar -->
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="cancelar" value="true">
+          <input type="hidden" name="empresa" value="{{ form.empresa.value }}">
+          <input type="hidden" name="año" value="{{ form.año.value }}">
+          <input type="hidden" name="numero_proyecto" value="{{ form.numero_proyecto.value }}">
+          <input type="hidden" name="subproyecto" value="{{ form.subproyecto.value }}">
+          <input type="hidden" name="departamento" value="{{ form.departamento.value }}">
+          <input type="hidden" name="disciplina" value="{{ form.disciplina.value }}">
+          <input type="hidden" name="tipo_documento" value="{{ form.tipo_documento.value }}">
+          <button type="submit" class="btn btn-secondary">Cancelar</button>
+        </form>
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade show"></div>
-  {% endif %}
+ 
+{% endif %}
+
 {% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'index.html' %}
+{% load static %}
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Error {{ codigo }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 60px;
+        }
+        .error-box {
+            border: 1px solid #e74c3c;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f9e2e2;
+            display: inline-block;
+        }
+        h1 {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+
+{% block content %} 
+
+    <div class="error-box">
+        <h1>Error {{ codigo }}</h1>
+        <p>{{ mensaje }}</p>
+        <a href="{% url 'lista_codigos' %}">Volver a la lista de códigos</a>
+    </div>
+
+{% endblock %}

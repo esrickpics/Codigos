@@ -1,0 +1,45 @@
+{% extends 'index.html' %}
+{% block content %}
+<div class="container my-5">
+  <h2>Solicitudes de Anulación</h2>
+
+  {% if solicitudes %}
+    <table class="table mt-4">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Solicitante</th>
+          <th>Fecha</th>
+          <th>Motivo</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for solicitud in solicitudes %}
+        <tr>
+          <td>{{ solicitud.codigo.codigo }}</td>
+          <td>{{ solicitud.solicitante.username }}</td>
+          <td>{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+          <td>{{ solicitud.motivo }}</td>
+          <td>
+          <form method="post" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="solicitud_id" value="{{ solicitud.id }}">
+            <button name="accion" value="anular" class="btn btn-sm btn-danger">Anular</button>
+          </form>
+
+          <form method="post" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="solicitud_id" value="{{ solicitud.id }}">
+            <button name="accion" value="rechazar" class="btn btn-sm btn-secondary">Rechazar</button>
+          </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info mt-4">No hay solicitudes pendientes.</div>
+  {% endif %}
+</div>
+{% endblock %}

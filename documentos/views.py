@@ -1,14 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.core.mail import send_mail, BadHeaderError
 from .forms import CodigoForm, BusquedaCodigoForm
-from .models import CodigoGenerado, Empresa
+from .models import CodigoGenerado, Empresa, SolicitudAnulacion
 from django.db import IntegrityError
-from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required
 from datetime import datetime, timedelta
 from django.utils.timezone import now
 
@@ -133,6 +134,20 @@ def generar_codigo(request):
                     'error': None
                 })
 
+            if 'confirmar' in request.POST:
+                motivo = request.POST.get("motivo", "").strip()
+                if not motivo:
+                    # Reabrir el modal si el motivo no fue ingresado
+                    mostrar_modal = True
+                    codigo_previsualizacion = request.POST.get("codigo_previsualizacion", "")
+                    return render(request, 'generador_codigo.html', {
+                        'form': form,
+                        'mostrar_modal': mostrar_modal,
+                        'codigo_previsualizacion': codigo_previsualizacion,
+                        'codigo_generado': None,
+                        'error': "El campo de motivo es obligatorio.",
+                        'motivo_guardado': motivo,
+                    })
             # Si se confirmó, guardamos el código
             try:
                 CodigoGenerado.objects.create(
@@ -146,14 +161,16 @@ def generar_codigo(request):
                     consecutivo=consecutivo,
                     codigo=codigo,
                     usuario=request.user,
+                    motivo=motivo
                 )
                 codigo_generado = codigo
+                print(f"Nuevo código generado: {codigo}")
 
                 # Enviar correo
                 usuario = request.user.username
                 fecha = now().strftime('%d/%m/%Y %H:%M')
-                #destino = 'ricardogoitia108@gmail.com'  # Cambiar por la dirección de correo de la empresa
-                destino = empresa.correo_notificacion
+                destino = 'ricardogoitia108@gmail.com'  # Cambiar por la dirección de correo de la empresa
+                #destino = empresa.correo_notificacion
                 asunto = 'Nuevo código generado'
                 mensaje = f"""
                     Se ha generado un nuevo código:
@@ -216,15 +233,25 @@ def buscar_codigo(request):
         'form': form,
         'resultados': resultados
     })
-
 @login_required
 def lista_codigos(request):
     mostrar_todos = request.GET.get('todos')
-    if mostrar_todos:
-        codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')
-    else:
-        codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')[:15]
-    return render(request, 'lista_codigos.html', {'codigos': codigos, 'mostrar_todos': mostrar_todos})
+
+    codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')
+    if not mostrar_todos:
+        codigos = codigos[:15]
+
+    # Obtener las solicitudes de anulación pendientes del usuario actual
+    solicitudes_pendientes = SolicitudAnulacion.objects.filter(
+        solicitante=request.user,
+        procesada=False
+    ).values_list('codigo_id', flat=True)
+
+    return render(request, 'lista_codigos.html', {
+        'codigos': codigos,
+        'mostrar_todos': mostrar_todos,
+        'solicitudes_pendientes': list(solicitudes_pendientes)  # Pasamos como lista para JS
+    })
 
 
 @login_required
@@ -232,12 +259,18 @@ def anular_codigo(request, codigo_id):
     if request.method == 'POST':
         try:
             codigo = CodigoGenerado.objects.get(id=codigo_id)
-            if request.user == codigo.usuario or request.user.is_staff:
+
+            # Solo aprobadores o el mismo usuario
+            if request.user == codigo.usuario or request.user.groups.filter(name="Aprobadores").exists():
                 if not codigo.anulado:
                     codigo.anulado = True
-                    codigo.usuario_anulacion = request.user  
+                    codigo.usuario_anulacion = request.user
                     codigo.fecha_anulacion = now()
                     codigo.save()
+
+                    # Si existía una solicitud previa de este código, marcarla como procesada
+                    SolicitudAnulacion.objects.filter(codigo=codigo, procesada=False).update(procesada=True)
+
                     return JsonResponse({'success': True})
                 else:
                     return JsonResponse({'success': False, 'error': 'Ya está anulado'}, status=400)
@@ -245,9 +278,83 @@ def anular_codigo(request, codigo_id):
                 return JsonResponse({'success': False, 'error': 'No autorizado'}, status=403)
         except CodigoGenerado.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Código no encontrado'}, status=404)
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+def solicitar_anulacion(request, codigo_id):
+    if request.method == 'POST':
+        try:
+            motivo = request.POST.get('motivo', '').strip()
+
+            if not motivo:
+                return JsonResponse({'success': False, 'error': 'El motivo no puede estar vacío.'}, status=400)
+
+            codigo = CodigoGenerado.objects.get(id=codigo_id)
+
+            existe = SolicitudAnulacion.objects.filter(
+                codigo=codigo, solicitante=request.user, procesada=False
+            ).exists()
+
+            if existe:
+                return JsonResponse({'success': False, 'error': 'Ya solicitaste la anulación'}, status=400)
+
+            # Crear la solicitud
+            SolicitudAnulacion.objects.create(
+                codigo=codigo,
+                solicitante=request.user,
+                motivo=motivo,
+                fecha_solicitud=now()
+            )
+
+            return JsonResponse({'success': True})
+
+        except CodigoGenerado.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Código no encontrado'}, status=404)
+
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 @login_required
 def historial_anulaciones(request):
     anulaciones = CodigoGenerado.objects.filter(anulado=True).order_by('-fecha_anulacion')
     return render(request, 'historial_anulaciones.html', {'anulaciones': anulaciones})
+
+@login_required
+def solicitudes_anulacion_view(request):
+    if request.method == 'POST':
+        solicitud_id = request.POST.get('solicitud_id')
+        accion = request.POST.get('accion')  # anular o rechazar
+
+        try:
+            solicitud = SolicitudAnulacion.objects.select_related('codigo').get(id=solicitud_id, procesada=False)
+            if accion == 'anular':
+                solicitud.procesada = True
+                solicitud.codigo.anulado = True
+                solicitud.codigo.fecha_anulacion = now()
+                solicitud.codigo.usuario_anulacion = request.user
+                solicitud.codigo.save()
+                solicitud.save()
+                messages.success(request, f"Código {solicitud.codigo.codigo} anulado correctamente.")
+            elif accion == 'rechazar':
+                solicitud.procesada = True
+                solicitud.save()
+                messages.info(request, f"Solicitud de anulación rechazada para el código {solicitud.codigo.codigo}.")
+            else:
+                messages.error(request, "Acción no válida.")
+
+        except SolicitudAnulacion.DoesNotExist:
+            messages.error(request, "Solicitud no encontrada o ya procesada.")
+
+        return redirect('solicitudes_anulacion')
+
+    solicitudes = SolicitudAnulacion.objects.select_related('codigo', 'solicitante') \
+                    .filter(procesada=False).order_by('-fecha_solicitud')
+
+    return render(request, 'solicitudes_anulacion.html', {'solicitudes': solicitudes})
+
+def mostrar_error(request, mensaje="Ha ocurrido un error", codigo=400):
+    return render(request, 'error.html', {
+        'mensaje': mensaje,
+        'codigo': codigo
+    }, status=codigo)

@@ -27,6 +27,7 @@ class CodigoGenerado(models.Model):
     tipo_documento = models.CharField(max_length=4)
     consecutivo = models.PositiveIntegerField()
     codigo = models.CharField(max_length=50, unique=True)
+    motivo = models.TextField(verbose_name="Motivo / Asunto") 
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     anulado = models.BooleanField(default=False)
@@ -36,3 +37,18 @@ class CodigoGenerado(models.Model):
     def __str__(self):
         return self.codigo + ' by ' + str(self.usuario)
     
+
+class SolicitudAnulacion(models.Model):
+    codigo = models.ForeignKey(CodigoGenerado, on_delete=models.CASCADE)
+    solicitante = models.ForeignKey(User, on_delete=models.CASCADE)
+    motivo = models.TextField()
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    procesada = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Solicitud de {self.solicitante} para {self.codigo}"
+
+    class Meta:
+        permissions = [
+            ("puede_anular_codigo", "Puede anular códigos"),
+        ]
