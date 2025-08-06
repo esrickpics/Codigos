@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.core.mail import send_mail, BadHeaderError
@@ -177,6 +178,7 @@ def generar_codigo(request):
                     Usuario: {usuario}
                     Fecha: {fecha}
                     Código: {codigo}
+                    Motivo: {motivo}
                 """
                 try:
                     send_mail(asunto, mensaje, 'admin@cpaldaca.com', [destino], fail_silently=False)
@@ -322,6 +324,9 @@ def historial_anulaciones(request):
 
 @login_required
 def solicitudes_anulacion_view(request):
+    if not request.user.groups.filter(name='aprobadores').exists():
+        return mostrar_error(request, mensaje="No tienes permiso para acceder a esta página.", codigo=403)
+    
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')
         accion = request.POST.get('accion')  # anular o rechazar

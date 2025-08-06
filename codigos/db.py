@@ -1,7 +1,7 @@
 
 #Configuración de desarrollo local
 #Configuración de la base de datos para el entorno local de desarrollo.
-"""
+
 MYSQL = {
    'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -24,3 +24,4 @@ MYSQL = {
         'PORT': '',
     }
 }
+"""
