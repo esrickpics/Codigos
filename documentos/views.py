@@ -168,8 +168,24 @@ def generar_codigo(request):
                 codigo_generado = codigo
                 print(f"Nuevo código generado: {codigo}")
 
-             
-                # Enviar correo
+                # Normalizamos el nombre de la empresa para seleccionar el logo
+                nombre_empresa = empresa.nombre.strip()
+
+                # Asignamos logo específico según nombre
+                if nombre_empresa == "SSAPI":
+                    logo_empresa = "ssapi.png"
+                elif nombre_empresa == "Paldaca":
+                    logo_empresa = "PaldacalogoyRif.png"
+                elif nombre_empresa == "Orinoco Energy":
+                    logo_empresa = "orinoco.png"
+                elif nombre_empresa == "Kinetic Scale Projectos":
+                    logo_empresa = "ksp.png"
+                else:
+                    logo_empresa = "PaldacalogoyRif.png"  # Logo por defecto si no coincide ninguna
+
+                print(f"Logo empresa: {logo_empresa}")
+                logo_url = f"https://cpaldaca.com/static_codigos/img/{logo_empresa}"
+
                 usuario = request.user.username
                 fecha = now().strftime('%d/%m/%Y %H:%M')
                 #destino = 'ricardogoitia108@gmail.com'
@@ -181,6 +197,7 @@ def generar_codigo(request):
                     'fecha': fecha,
                     'codigo': codigo,
                     'motivo': motivo,
+                    'logo_url': logo_url,
                 }
 
                 mensaje_texto = f"""

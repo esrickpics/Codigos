@@ -102,7 +102,7 @@
         </div>
         
         <!-- Formulario de Confirmar -->
-        <form method="post">
+        <form method="post" id="form-confirmar">
           {% csrf_token %}
           <div class="modal-body">
             <div class="mb-3">
@@ -121,7 +121,8 @@
           </div>
 
           <div class="modal-footer justify-content-center d-flex gap-3">
-            <button type="submit" class="btn btn-success">Confirmar</button>
+            <button type="submit" name="confirmar" id="btn-confirmar" class="btn btn-success">Confirmar</button>
+          
         </form>
 
         <!-- Formulario de Cancelar -->
@@ -142,5 +143,19 @@
   </div>
  
 {% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById("form-confirmar");
+        const btnConfirmar = document.getElementById("btn-confirmar");
+
+        if (form && btnConfirmar) {
+            form.addEventListener("submit", function() {
+                btnConfirmar.disabled = true;
+                btnConfirmar.innerText = "Enviando...";
+            });
+        }
+    });
+</script>
 
 {% endblock %}
