@@ -45,6 +45,7 @@ class CodigoForm(forms.Form):
         ('RGA', 'Relación de Gastos'), ('CEN', 'Centro de Costos'),
         ('DPT', 'Descripción de Puesto de Trabajo'), ('TRN', 'Transmittal'),
         ('GEN', 'Documentos Generales'),
+        ('PGM', 'Programa'),
     ]
 
     empresa = forms.ModelChoiceField(queryset=Empresa.objects.all(), label='Empresa')

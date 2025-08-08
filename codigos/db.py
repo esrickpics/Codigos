@@ -12,6 +12,7 @@ MYSQL = {
         'PORT': '3306',         # puerto por defecto de MySQL
     }
 }
+
 """
 #Configuración de producción
 MYSQL = {

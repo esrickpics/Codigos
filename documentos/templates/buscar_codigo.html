@@ -26,6 +26,7 @@
                 <th>Código</th>
                 <th>Usuario</th>
                 <th>Fecha</th>
+                <th>Asunto</th>
             </tr>
         </thead>
         <tbody>
@@ -40,6 +41,7 @@
                 </td>
                 <td>{{ codigo.usuario.username }}</td>
                 <td>{{ codigo.fecha_creacion|date:"Y-m-d H:i" }}</td>
+                <td>{{ codigo.motivo }}</td>
             </tr>
         {% endfor %}
         </tbody>

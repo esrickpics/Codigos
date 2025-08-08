@@ -5,13 +5,14 @@ from django.contrib.auth import login, logout, authenticate
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.urls import reverse
-from django.core.mail import send_mail, BadHeaderError
+from django.core.mail import BadHeaderError, EmailMultiAlternatives
 from .forms import CodigoForm, BusquedaCodigoForm
 from .models import CodigoGenerado, Empresa, SolicitudAnulacion
 from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from datetime import datetime, timedelta
+from django.template.loader import render_to_string
 from django.utils.timezone import now
 
 def home(request): 
@@ -20,7 +21,7 @@ def home(request):
 def signup(request):
     
     if request.method == 'GET':
-        return render(request, 'signup.html', { 
+        return render(request, 'Acceso/signup.html', { 
             'form': UserCreationForm(),                            
         })
     else:
@@ -38,7 +39,7 @@ def signup(request):
                 # Redirigir a la página de inicio después del registro exitoso
                 return redirect('home')
             except IntegrityError:
-                return render(request, 'signup.html', { 
+                return render(request, 'Acceso/signup.html', { 
                     'form': UserCreationForm(),
                     'error': 'El usuario ya existe'                   
                 })
@@ -54,13 +55,13 @@ def signout(request):
 
 def IniciarSesion(request):
     if request.method == 'GET':
-        return render(request, 'login.html', { 
+        return render(request, 'Acceso/login.html', { 
             'form': AuthenticationForm() 
         })
     else:
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is None:
-            return render(request, 'login.html', {
+            return render(request, 'Acceso/login.html', {
                 'form': AuthenticationForm(),
                 'error': 'Usuario o contraseña incorrectos.'
             })
@@ -167,26 +168,44 @@ def generar_codigo(request):
                 codigo_generado = codigo
                 print(f"Nuevo código generado: {codigo}")
 
+             
                 # Enviar correo
                 usuario = request.user.username
                 fecha = now().strftime('%d/%m/%Y %H:%M')
-                destino = 'ricardogoitia108@gmail.com'  # Cambiar por la dirección de correo de la empresa
-                #destino = empresa.correo_notificacion
+                #destino = 'ricardogoitia108@gmail.com'
+                destino = empresa.corre_notificacion  # o empresa.correo_notificacion
                 asunto = 'Nuevo código generado'
-                mensaje = f"""
-                    Se ha generado un nuevo código:
-                    Usuario: {usuario}
-                    Fecha: {fecha}
-                    Código: {codigo}
-                    Motivo: {motivo}
-                """
-                try:
-                    send_mail(asunto, mensaje, 'admin@cpaldaca.com', [destino], fail_silently=False)
-                except BadHeaderError:
-                    error_formulario = "Error: encabezado de correo inválido."
-                except Exception as e:
-                    error_formulario = f"El código fue generado, pero el correo no pudo enviarse: {e}"
 
+                contexto_email = {
+                    'usuario': usuario,
+                    'fecha': fecha,
+                    'codigo': codigo,
+                    'motivo': motivo,
+                }
+
+                mensaje_texto = f"""
+                Se ha generado un nuevo código:
+                Usuario: {usuario}
+                Fecha: {fecha}
+                Código: {codigo}
+                Motivo: {motivo}
+                """
+
+                mensaje_html = render_to_string('emails/nuevo_codigo.html', contexto_email)
+
+                email = EmailMultiAlternatives(
+                    asunto,
+                    mensaje_texto,
+                    'admin@cpaldaca.com',
+                    [destino],
+                )
+                email.attach_alternative(mensaje_html, "text/html")
+                email.encoding = 'utf-8'
+                email.send(fail_silently=False)
+            except BadHeaderError:
+                error_formulario = "Error: encabezado de correo inválido."
+            except Exception as e:
+                error_formulario = f"El código fue generado, pero el correo no pudo enviarse: {e}"
             except Exception as e:
                 error_formulario = f"Ocurrió un error al guardar el código: {e}"
         else:
