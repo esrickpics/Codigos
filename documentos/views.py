@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from datetime import datetime, timedelta
 from django.template.loader import render_to_string
-from django.utils.timezone import now
+from django.utils.timezone import now, localtime
 
 def home(request): 
     return render(request, 'home.html')
@@ -187,7 +187,7 @@ def generar_codigo(request):
                 logo_url = f"https://cpaldaca.com/static_codigos/img/{logo_empresa}"
 
                 usuario = request.user.username
-                fecha = now().strftime('%d/%m/%Y %H:%M')
+                fecha = localtime(now()).strftime('%d/%m/%Y %H:%M')
                 #destino = 'ricardogoitia108@gmail.com'
                 destino = empresa.corre_notificacion  # o empresa.correo_notificacion
                 asunto = 'Nuevo código generado'
