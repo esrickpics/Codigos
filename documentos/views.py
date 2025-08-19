@@ -7,16 +7,20 @@ from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.urls import reverse
 from django.core.mail import BadHeaderError, EmailMultiAlternatives
 from .forms import CodigoForm, BusquedaCodigoForm
-from .models import CodigoGenerado, Empresa, SolicitudAnulacion
+from .models import CodigoGenerado, SolicitudAnulacion
 from django.db import IntegrityError
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.timezone import now, localtime
+from django.utils.encoding import force_str
 
-def home(request): 
-    return render(request, 'home.html')
+@login_required
+def home(request):
+    nombre_usuario = request.user.get_full_name() or request.user.username
+    return render(request, 'home.html', {'nombre_usuario': nombre_usuario})
+
 
 def signup(request):
     
@@ -186,12 +190,13 @@ def generar_codigo(request):
                 print(f"Logo empresa: {logo_empresa}")
                 logo_url = f"https://cpaldaca.com/static_codigos/img/{logo_empresa}"
 
-                usuario = request.user.username
-                fecha = localtime(now()).strftime('%d/%m/%Y %H:%M')
+                usuario = force_str(request.user.username)
+                fecha = force_str(localtime(now()).strftime('%d/%m/%Y %H:%M'))
+                destino = force_str(empresa.corre_notificacion)
                 #destino = 'ricardogoitia108@gmail.com'
-                destino = empresa.corre_notificacion  # o empresa.correo_notificacion
-                asunto = 'Nuevo código generado'
-
+                asunto = force_str('Nuevo Código generado')
+                print(f"Enviando correo a {destino} con asunto '{asunto}'")
+                
                 contexto_email = {
                     'usuario': usuario,
                     'fecha': fecha,
@@ -216,8 +221,9 @@ def generar_codigo(request):
                     'admin@cpaldaca.com',
                     [destino],
                 )
-                email.attach_alternative(mensaje_html, "text/html")
                 email.encoding = 'utf-8'
+                email.attach_alternative(mensaje_html, "text/html")
+                print(f"Enviando correo a {destino} con asunto '{asunto}' en codigo {email.encoding}") 
                 email.send(fail_silently=False)
             except BadHeaderError:
                 error_formulario = "Error: encabezado de correo inválido."
