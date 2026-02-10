@@ -192,8 +192,8 @@ def generar_codigo(request):
 
                 usuario = force_str(request.user.username)
                 fecha = force_str(localtime(now()).strftime('%d/%m/%Y %H:%M'))
-                #destino = force_str(empresa.corre_notificacion)
-                destino = 'dasilvas@ssapico.com'
+                destino = force_str(empresa.corre_notificacion)
+                #destino = 'dasilvas@ssapico.com'
                 asunto = force_str('Nuevo Código generado')
                 print(f"Enviando correo a {destino} con asunto '{asunto}'")
                 
@@ -218,7 +218,7 @@ def generar_codigo(request):
                 email = EmailMultiAlternatives(
                     asunto,
                     mensaje_texto,
-                    'admin@sari.cpaldaca.com',
+                    'admin@codigos.cpaldaca.com',
                     [destino],
                 )
                 email.encoding = 'utf-8'
