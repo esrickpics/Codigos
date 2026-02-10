@@ -15,26 +15,29 @@ class CodigoForm(forms.Form):
     NUM_PROYECTO = [(f"{i:02}", f"{i:02}") for i in range(0, 100)]
     SUBPROYECTOS = [(chr(i), chr(i)) for i in range(ord('A'), ord('Z') + 1)] + [('0', '0')]
     DEPARTAMENTOS = [
-        ('GG', 'Gerencia General'), ('GO', 'Gerencia de Operaciones'),
-        ('MN', 'Mantenimiento'), ('CO', 'Construcción'), ('IN', 'Ingeniería'),
-        ('CA', 'Calidad'), ('RH', 'Recursos Humanos'), ('SH', 'Seguridad'),
-        ('AM', 'Ambiente'), ('PR', 'Procura'), ('CT', 'Contratos'),
-        ('AF', 'Administración y Finanzas'), ('PL', 'Planificación'),
-        ('EC', 'Estimación de Costos'), ('CD', 'Control de Documentos'),
-        ('GN', 'General'),
+    ('GG', 'Gerencia General'), ('GO', 'Gerencia de Operaciones'),
+    ('MN', 'Mantenimiento'), ('CO', 'Construcción'), ('IN', 'Ingeniería'),
+    ('CA', 'Calidad'), ('RH', 'Recursos Humanos'), ('SH', 'Seguridad'),
+    ('AM', 'Ambiente'), ('PR', 'Procura'), ('CT', 'Contratos'),
+    ('AF', 'Administración y Finanzas'), ('PL', 'Planificación'),
+    ('EC', 'Estimación de Costos'), ('CD', 'Control de Documentos'),
+    ('GN', 'General'), ('GP', 'Gerencia de Proyectos'), ('OF', 'Ofertas'),
+    ('IT', 'Informática y Tecnología')
     ]
+
     DISCIPLINAS = [
         ('M', 'Mecánica'), ('A', 'Arquitectura'), ('C', 'Civil'),
         ('I', 'Instrumentación'), ('E', 'Electricidad'), ('P', 'Procesos'),
         ('T', 'Telecomunicaciones'), ('G', 'General')
     ]
+
     TIPOS_DOCUMENTO = [
         ('MVV', 'Misión y Visión y Valores'), ('PDC', 'Política de la Calidad'),
         ('ODC', 'Objetivos de la Calidad'), ('MDP', 'Mapa de Procesos'),
         ('MAC', 'Manual de la Calidad'), ('PRO', 'Procedimiento'),
         ('CAR', 'Carta'), ('FOR', 'Formulario'), ('ESP', 'Especificación Técnica'),
         ('HDD', 'Hoja de Datos'), ('LIS', 'Lista'), ('MAT', 'Matriz de Riesgo'),
-        ('MRP', 'Matriz de Riesgo de los Procesos'), ('FPR', 'Ficha de Proceso'),
+        ('MRO', 'Matriz de Riesgo y Oportunidades'), ('FPR', 'Ficha de Proceso'),
         ('FLU', 'Flujograma'), ('CRO', 'Cronograma'), ('MDC', 'Manejo del Cambio'),
         ('INS', 'Instrucción de Sitio'), ('NCN', 'No Conformidad'),
         ('DOC', 'Documentos de Ingeniería'), ('PLA', 'Plano'), ('PLN', 'Plan'),
@@ -43,9 +46,11 @@ class CodigoForm(forms.Form):
         ('CON', 'Contrato'), ('ESC', 'Estimado de Costos'), ('PRE', 'Presentación'),
         ('INF', 'Informe'), ('MNT', 'Minuta'), ('SVI', 'Solicitud de Viáticos'),
         ('RGA', 'Relación de Gastos'), ('CEN', 'Centro de Costos'),
-        ('DPT', 'Descripción de Puesto de Trabajo'), ('TRN', 'Transmittal'),
-        ('GEN', 'Documentos Generales'),
-        ('PGM', 'Programa'),
+        ('HDC', 'Hoja de Control'), ('DPT', 'Descripción de Puesto de Trabajo'), 
+        ('TRN', 'Transmittal'), ('GEN', 'Documentos Generales'),
+        ('PGM', 'Programa'), ('PQC', 'Plan de la Calidad'),
+        ('ACC', 'Acción Correctiva'), ('PNC', 'Producto No Conforme'),
+        ('ODM', 'Oportunidad de Mejora')
     ]
 
     empresa = forms.ModelChoiceField(queryset=Empresa.objects.all(), label='Empresa')

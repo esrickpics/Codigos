@@ -188,12 +188,12 @@ def generar_codigo(request):
                     logo_empresa = "PaldacalogoyRif.png"  # Logo por defecto si no coincide ninguna
 
                 print(f"Logo empresa: {logo_empresa}")
-                logo_url = f"https://cpaldaca.com/static_codigos/img/{logo_empresa}"
+                logo_url = f"https://codigos.cpaldaca.com/static_codigos/img/{logo_empresa}"
 
                 usuario = force_str(request.user.username)
                 fecha = force_str(localtime(now()).strftime('%d/%m/%Y %H:%M'))
                 destino = force_str(empresa.corre_notificacion)
-                #destino = 'ricardogoitia108@gmail.com'
+                #destino = 'dasilvas@ssapico.com'
                 asunto = force_str('Nuevo Código generado')
                 print(f"Enviando correo a {destino} con asunto '{asunto}'")
                 
@@ -218,7 +218,7 @@ def generar_codigo(request):
                 email = EmailMultiAlternatives(
                     asunto,
                     mensaje_texto,
-                    'admin@cpaldaca.com',
+                    'admin@sari.cpaldaca.com',
                     [destino],
                 )
                 email.encoding = 'utf-8'
