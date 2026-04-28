@@ -103,13 +103,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # settings.py
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'sari.cpaldaca.com'
+EMAIL_HOST = 'codigos.cpaldaca.com'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True         # ✅ Usa SSL ya que el puerto es 465
 EMAIL_USE_TLS = False        # ❌ TLS debe estar desactivado si usas SSL
-EMAIL_HOST_USER = 'admin@sari.cpaldaca.com'
+EMAIL_HOST_USER = 'admin@codigos.cpaldaca.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # Se carga desde correo.env
-DEFAULT_FROM_EMAIL = 'admin@sari.cpaldaca.com'
+DEFAULT_FROM_EMAIL = 'admin@codigos.cpaldaca.com'
 #print('PASS:', os.getenv('EMAIL_HOST_PASSWORD'))
 
 # Internationalization
