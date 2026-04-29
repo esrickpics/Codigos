@@ -77,10 +77,32 @@ class CodigoForm(forms.Form):
     ('SVI', 'Solicitud de Viáticos'),
     ('TRN', 'Transmittal')
 ]
-    empresa = forms.ModelChoiceField(queryset=Empresa.objects.all(), label='Empresa')
-    año = forms.ChoiceField(choices=AÑOS)
-    numero_proyecto = forms.ChoiceField(choices=NUM_PROYECTO)
-    subproyecto = forms.ChoiceField(choices=SUBPROYECTOS)
-    departamento = forms.ChoiceField(choices=DEPARTAMENTOS)
-    disciplina = forms.ChoiceField(choices=DISCIPLINAS)
-    tipo_documento = forms.ChoiceField(choices=TIPOS_DOCUMENTO)
+    empresa = forms.ModelChoiceField(
+        queryset=Empresa.objects.all(),
+        label='Empresa',
+        help_text='Define el prefijo (sigla) que iniciará el código.',
+    )
+    año = forms.ChoiceField(
+        choices=AÑOS,
+        help_text='Año del proyecto o del documento.',
+    )
+    numero_proyecto = forms.ChoiceField(
+        choices=NUM_PROYECTO,
+        help_text='Identificador numérico del proyecto (dos dígitos). Usa 00 para asuntos generales.',
+    )
+    subproyecto = forms.ChoiceField(
+        choices=SUBPROYECTOS,
+        help_text='Letra o 0 según la estructura del proyecto. Usa 0 cuando aplique como general.',
+    )
+    departamento = forms.ChoiceField(
+        choices=DEPARTAMENTOS,
+        help_text='Área responsable; define el segmento departamental en el código.',
+    )
+    disciplina = forms.ChoiceField(
+        choices=DISCIPLINAS,
+        help_text='Disciplina técnica asociada al entregable.',
+    )
+    tipo_documento = forms.ChoiceField(
+        choices=TIPOS_DOCUMENTO,
+        help_text='Clasificación del documento (contrato, plano, procedimiento, etc.).',
+    )
