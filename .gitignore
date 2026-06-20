@@ -7,7 +7,10 @@ __pycache__/
 
 # Environment variables
 .env
+key.env
 *.env
+!key.env.example
+!correo.env.example
 
 # SQLite database (si usas SQLite)
 db.sqlite3

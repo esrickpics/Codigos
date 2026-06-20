@@ -1,12 +1,16 @@
  # codigos/forms.py
 from django import forms
 from datetime import datetime
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import Empresa
 
 class BusquedaCodigoForm(forms.Form):
     codigo = forms.CharField(label='Código', required=False)
-    usuario = forms.ModelChoiceField(label='Usuario', queryset=User.objects.all(), required=False)
+    usuario = forms.ModelChoiceField(
+        label='Usuario',
+        queryset=get_user_model().objects.all(),
+        required=False,
+    )
     fecha_inicio = forms.DateField(label='Desde', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     fecha_fin = forms.DateField(label='Hasta', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
 

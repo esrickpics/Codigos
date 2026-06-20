@@ -18,15 +18,24 @@ from .db import MYSQL as DATABASES
 from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(dotenv_path=os.path.join(BASE_DIR, 'correo.env'))
+_key_env = BASE_DIR / "key.env"
+if _key_env.exists():
+    load_dotenv(_key_env)
+else:
+    load_dotenv(BASE_DIR / ".env" / "key.env")
+load_dotenv(dotenv_path=os.path.join(BASE_DIR, "correo.env"))
 LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2@j%hivvj^9_-(qs7ej+b7d2d9lmm&!q*)6*$qz)0(!jwy9kf)'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "").strip()
+if not SECRET_KEY:
+    raise ValueError(
+        "DJANGO_SECRET_KEY no definida. Copia key.env desde Portal-Paldaca "
+        "(misma clave y MYSQL_*) a la raiz de Codigos."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -55,6 +64,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.PaldacaSessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -71,6 +81,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.paldaca_urls',
                 'core.context_processors.navigation_context',
             ],
         },
@@ -84,6 +95,36 @@ WSGI_APPLICATION = 'codigos.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = DATABASES
+
+AUTH_USER_MODEL = "core.UsuarioPaldaca"
+
+PALDACA_SSO_LOGIN_URL = os.getenv("PALDACA_SSO_LOGIN_URL", "http://localhost:5173/login/")
+PALDACA_SSO_LOGOUT_URL = os.getenv(
+    "PALDACA_SSO_LOGOUT_URL",
+    "http://localhost:8000/api/auth/sso/logout/",
+)
+PALDACA_STRICT_SESSION_CONSISTENCY = os.getenv(
+    "PALDACA_STRICT_SESSION_CONSISTENCY",
+    "true",
+)
+SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "paldaca_sessionid")
+SESSION_COOKIE_DOMAIN = os.getenv("SESSION_COOKIE_DOMAIN") or None
+
+if DEBUG:
+    SESSION_COOKIE_DOMAIN = None
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_DOMAIN = None
+    CSRF_COOKIE_SECURE = False
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://localhost:8001",
+        "http://localhost:8002",
+        "http://localhost:8003",
+    ]
+
+LOGIN_URL = PALDACA_SSO_LOGIN_URL
+LOGOUT_REDIRECT_URL = PALDACA_SSO_LOGOUT_URL
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -133,8 +174,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [ BASE_DIR / "documentos" / "static" ]
-
-LOGIN_URL = '/Login'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

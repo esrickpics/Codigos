@@ -8,7 +8,8 @@ from .forms import CodigoForm, BusquedaCodigoForm
 from .models import CodigoGenerado, SolicitudAnulacion
 from django.db import IntegrityError
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from .decorators import requiere_modulo_paldaca
+from .permissions import es_aprobador_codigos
 from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from django.utils.timezone import now, localtime
@@ -109,7 +110,7 @@ def _preview_context_from_session(request, resultado_busqueda, motivo_draft=''):
     }
 
 
-@login_required
+@requiere_modulo_paldaca
 def generar_codigo(request):
     codigo_generado = None
     resultado_busqueda = None
@@ -316,7 +317,7 @@ def generar_codigo(request):
     }
     return render(request, 'generador_codigo.html', context)
 
-@login_required
+@requiere_modulo_paldaca
 def buscar_codigo(request):
     form = BusquedaCodigoForm(request.GET)
     resultados = CodigoGenerado.objects.none()  # No muestra nada hasta que se busque
@@ -348,7 +349,7 @@ def buscar_codigo(request):
         'form': form,
         'resultados': resultados
     })
-@login_required
+@requiere_modulo_paldaca
 def lista_codigos(request):
     mostrar_todos = request.GET.get('todos')
 
@@ -369,14 +370,14 @@ def lista_codigos(request):
     })
 
 
-@login_required
+@requiere_modulo_paldaca
 def anular_codigo(request, codigo_id):
     if request.method == 'POST':
         try:
             codigo = CodigoGenerado.objects.get(id=codigo_id)
 
             # Solo aprobadores o el mismo usuario
-            if request.user == codigo.usuario or request.user.groups.filter(name="Aprobadores").exists():
+            if request.user == codigo.usuario or es_aprobador_codigos(request.user):
                 if not codigo.anulado:
                     codigo.anulado = True
                     codigo.usuario_anulacion = request.user
@@ -402,7 +403,7 @@ def anular_codigo(request, codigo_id):
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 
-@login_required
+@requiere_modulo_paldaca
 def solicitar_anulacion(request, codigo_id):
     if request.method == 'POST':
         try:
@@ -440,14 +441,14 @@ def solicitar_anulacion(request, codigo_id):
     logger.warning("Metodo no permitido en solicitar_anulacion usuario=%s metodo=%s", request.user.username, request.method)
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
-@login_required
+@requiere_modulo_paldaca
 def historial_anulaciones(request):
     anulaciones = CodigoGenerado.objects.filter(anulado=True).order_by('-fecha_anulacion')
     return render(request, 'historial_anulaciones.html', {'anulaciones': anulaciones})
 
-@login_required
+@requiere_modulo_paldaca
 def solicitudes_anulacion_view(request):
-    if not request.user.groups.filter(name='aprobadores').exists():
+    if not es_aprobador_codigos(request.user):
         logger.warning("Acceso denegado solicitudes_anulacion usuario=%s", request.user.username)
         return mostrar_error(request, mensaje="No tienes permiso para acceder a esta página.", codigo=403)
     
