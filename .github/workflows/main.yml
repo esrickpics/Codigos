@@ -43,7 +43,7 @@ jobs:
             git stash
 
             echo "📥 Trayendo cambios desde GitHub..."
-            git pull origin main
+            git pull origin Main
 
             # (Opcional) Si necesitas recuperar tus configuraciones locales después del pull:
             # git stash pop
