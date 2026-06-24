@@ -25,7 +25,7 @@ jobs:
         env:
           CLAVE_SECRETA: ${{ secrets.SSH_PRIVATE_KEY }}
           
-      # PASO 2: Despliegue real (Cerrando sesión SSH en el puerto de Namecheap)
+      # PASO 2: Despliegue real
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -37,14 +37,28 @@ jobs:
             # 1. Navegar a la carpeta del proyecto primero
             cd /home/ssapmcco/Projects/Codigos
 
-            # 2. Traer cambios del repo
+            # 2. Resolver conflictos de Git de forma segura
+            # Stash guarda temporalmente los cambios locales que causan error para que el pull pase limpio
+            echo "📦 Guardando cambios locales temporales..."
+            git stash
+
+            echo "📥 Trayendo cambios desde GitHub..."
             git pull origin main
 
-            # 3. Activar el entorno virtual específico
-            source /home/ssapmcco/virtualenv/Projects/Codigos/3.13/bin/activate
+            # (Opcional) Si necesitas recuperar tus configuraciones locales después del pull:
+            # git stash pop
 
-            # 4. Instalar/actualizar dependencias
+            # 3. Activar el entorno virtual específico
+            echo "🐍 Activando entorno virtual..."
+            source /home/ssapmcco/virtualenv/Projects/Codigos/backend/3.13/bin/activate
+
+            # 4. Instalar/actualizar dependencias (corrigiendo la ruta a backend/)
+            echo "📦 Instalanado dependencias de Python..."
             pip install -r requirements.txt
 
+            # 5. Ejecutar migraciones si es necesario (Recomendado ya que usas base unificada en MySQL)
+            python manage.py migrate --noinput
+
             # 6. Reiniciar la app en cPanel (Esencial para Python)
+            echo "🔄 Reiniciando aplicación Phusion Passenger..."
             touch passenger_wsgi.py
