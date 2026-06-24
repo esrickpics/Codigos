@@ -3,7 +3,7 @@ name: Deploy to Namecheap
 on:
   push:
     branches: 
-      - main
+      - Main
 
 jobs: 
   deploy:
