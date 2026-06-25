@@ -249,7 +249,7 @@ def generar_codigo(request):
                 logo_url = f'https://codigos.cpaldaca.com/static_codigos/img/{logo_empresa}'
                 usuario = force_str(request.user.username)
                 fecha = force_str(localtime(now()).strftime('%d/%m/%Y %H:%M'))
-                destino = force_str(empresa.corre_notificacion)
+                destino = force_str(empresa.correo_notificacion)
                 asunto = force_str('Nuevo Código generado')
 
                 contexto_email = {
