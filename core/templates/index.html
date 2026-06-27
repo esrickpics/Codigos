@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/core.css' %}">
-    <link rel="stylesheet" href="{% static 'css/app-sidebar.css' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'img/PaldacaIcon.png' %}">
 
@@ -17,75 +16,11 @@
 </head>
 <body class="app-layout {% block body_class %}{% endblock %}">
 
-<aside class="app-sidebar" id="app-sidebar">
-  <div class="app-sidebar-brand">
-    <a class="app-sidebar-brand-link" href="{% url 'home' %}">
-      <img src="{% static 'img/logo blanco.png' %}" class="app-sidebar-logo app-sidebar-logo--full" alt="Consorcio Paldaca">
-      <img src="{% static 'img/logo blanco recortado.png' %}" class="app-sidebar-logo app-sidebar-logo--compact" alt="Paldaca">
-    </a>
-  </div>
-
-  <nav class="app-sidebar-nav">
-    <a class="app-sidebar-link {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}" href="{% url 'home' %}">
-      <i class="bi bi-house-door app-sidebar-icon"></i>
-      <span class="app-sidebar-label">Inicio</span>
-    </a>
-    <a class="app-sidebar-link {% if request.resolver_match.url_name == 'generar_codigo' %}is-active{% endif %}" href="{% url 'generar_codigo' %}">
-      <i class="bi bi-plus-square app-sidebar-icon"></i>
-      <span class="app-sidebar-label">Generar codigo</span>
-    </a>
-    <a class="app-sidebar-link {% if request.resolver_match.url_name == 'lista_codigos' or request.resolver_match.url_name == 'anular_codigo' or request.resolver_match.url_name == 'solicitar_anulacion' %}is-active{% endif %}" href="{% url 'lista_codigos' %}">
-      <i class="bi bi-clock-history app-sidebar-icon"></i>
-      <span class="app-sidebar-label">Historial</span>
-    </a>
-    <a class="app-sidebar-link {% if request.resolver_match.url_name == 'buscar_codigo' %}is-active{% endif %}" href="{% url 'buscar_codigo' %}">
-      <i class="bi bi-search app-sidebar-icon"></i>
-      <span class="app-sidebar-label">Buscador</span>
-    </a>
-    <a class="app-sidebar-link {% if request.resolver_match.url_name == 'historial_anulaciones' %}is-active{% endif %}" href="{% url 'historial_anulaciones' %}">
-      <i class="bi bi-file-earmark-x app-sidebar-icon"></i>
-      <span class="app-sidebar-label">Anulaciones</span>
-    </a>
-    {% if is_aprobador %}
-      <a class="app-sidebar-link {% if request.resolver_match.url_name == 'solicitudes_anulacion' %}is-active{% endif %}" href="{% url 'solicitudes_anulacion' %}">
-        <i class="bi bi-journal-check app-sidebar-icon"></i>
-        <span class="app-sidebar-label">Solicitudes</span>
-      </a>
-    {% endif %}
-  </nav>
-
-  <div class="app-sidebar-footer">
-    <button type="button" id="sidebarCollapseBtn" class="app-sidebar-collapse-btn" title="Colapsar menu">
-      <i class="bi bi-chevron-double-left"></i>
-    </button>
-    {% if user.is_authenticated %}
-      <a class="app-sidebar-link" href="{{ paldaca_sso_logout_url }}">
-        <i class="bi bi-box-arrow-right app-sidebar-icon"></i>
-        <span class="app-sidebar-label">Cerrar sesion</span>
-      </a>
-    {% else %}
-      <a class="app-sidebar-link" href="{{ paldaca_sso_login_url }}">
-        <i class="bi bi-box-arrow-in-right app-sidebar-icon"></i>
-        <span class="app-sidebar-label">Iniciar sesion</span>
-      </a>
-    {% endif %}
-  </div>
-</aside>
-
-<div class="app-sidebar-backdrop" id="app-sidebar-backdrop"></div>
+{% if user.is_authenticated %}
+{% include "includes/paldaca_nav.html" %}
+{% endif %}
 
 <div class="app-main-content">
-  <nav class="navbar app-topbar border-bottom">
-    <div class="container-fluid px-3">
-      <button type="button" id="mobileMenuBtn" class="app-mobile-menu-btn" aria-label="Abrir menu">
-        <i class="bi bi-list"></i>
-      </button>
-      <a class="navbar-brand" href="{% url 'home' %}">
-        <img src="{% static 'img/PaldacalogoyRif.png' %}" class="d-inline-block align-text-top logoheader">
-      </a>
-    </div>
-  </nav>
-
   <main class="app-page">
     {% block content %}{% endblock %}
   </main>
@@ -94,6 +29,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"></script>
-    <script src="{% static 'js/app-sidebar.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

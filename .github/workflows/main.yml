@@ -2,31 +2,14 @@ name: Deploy to Namecheap
 
 on:
   push:
-    branches: 
+    branches:
       - Main
 
-jobs: 
+jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # PASO 1: Diagnóstico previo para verificar si el secreto llega vivo
-      - name: Validar si el secreto se recibe correctamente
-        run: |
-          if [ -z "$CLAVE_SECRETA" ]; then
-            echo "❌ ERROR: El secreto está vacío."
-            exit 1
-          else
-            echo "✅ GitHub está enviando algo."
-            echo "Silueta visual de tu secreto (Letras/Números cambiados por 'x'):"
-            echo "----------------------------------------------------"
-            echo "$CLAVE_SECRETA" | sed 's/[A-Za-z0-9]/x/g'
-            echo "----------------------------------------------------"
-          fi
-        env:
-          CLAVE_SECRETA: ${{ secrets.SSH_PRIVATE_KEY }}
-          
-      # PASO 2: Despliegue real
-      - name: Deploy via SSH
+      - name: Deploy Codigos via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -34,31 +17,46 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            # 1. Navegar a la carpeta del proyecto primero
-            cd /home/ssapmcco/Projects/Codigos
+            set -e
+            PROJECT_DIR=/home/ssapmcco/Projects/Codigos
+            STATIC_SITE=/home/ssapmcco/codigos.cpaldaca.com
+            VENV=/home/ssapmcco/virtualenv/Projects/Codigos/3.13/bin/activate
 
-            # 2. Resolver conflictos de Git de forma segura
-            # Stash guarda temporalmente los cambios locales que causan error para que el pull pase limpio
-            echo "📦 Guardando cambios locales temporales..."
-            git stash
+            cd "$PROJECT_DIR"
 
-            echo "📥 Trayendo cambios desde GitHub..."
+            echo "Guardando cambios locales temporales..."
+            git stash || true
+
+            echo "Trayendo cambios desde GitHub..."
             git pull origin Main
 
-            # (Opcional) Si necesitas recuperar tus configuraciones locales después del pull:
-            # git stash pop
+            echo "Activando entorno virtual..."
+            source "$VENV"
 
-            # 3. Activar el entorno virtual específico
-            echo "🐍 Activando entorno virtual..."
-            source /home/ssapmcco/virtualenv/Projects/Codigos/backend/3.13/bin/activate
+            if [ -f "requirements.txt" ]; then
+              echo "Instalando dependencias..."
+              pip install -r requirements.txt
+            fi
 
-            # 4. Instalar/actualizar dependencias (corrigiendo la ruta a backend/)
-            echo "📦 Instalanado dependencias de Python..."
-            pip install -r requirements.txt
-
-            # 5. Ejecutar migraciones si es necesario (Recomendado ya que usas base unificada en MySQL)
+            echo "Aplicando migraciones..."
             python manage.py migrate --noinput
 
-            # 6. Reiniciar la app en cPanel (Esencial para Python)
-            echo "🔄 Reiniciando aplicación Phusion Passenger..."
-            touch passenger_wsgi.py
+            echo "Recopilando archivos estaticos..."
+            python manage.py collectstatic --noinput --clear
+
+            echo "Limpiando sitio estatico anterior..."
+            mkdir -p "$STATIC_SITE/static"
+            for item in "$STATIC_SITE"/* "$STATIC_SITE"/.[^.]*; do
+              [ -e "$item" ] || continue
+              base="$(basename "$item")"
+              case "$base" in
+                .htaccess|.well-known|cgi-bin) ;;
+                *) rm -rf "$item" ;;
+              esac
+            done
+
+            echo "Publicando static en codigos.cpaldaca.com..."
+            rsync -av --delete "$PROJECT_DIR/staticfiles/" "$STATIC_SITE/static/"
+
+            echo "Reiniciando aplicacion Phusion Passenger..."
+            touch "$PROJECT_DIR/passenger_wsgi.py"
