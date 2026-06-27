@@ -18,7 +18,7 @@ MYSQL = {
 MYSQL = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ssapmcco_codigos_db',
+        'NAME': 'ssapmcco_PALDACA_DB',
         'USER': 'ssapmcco_ADMIN',
         'PASSWORD': 'ADMINPALDACA12345',
         'HOST': 'localhost',
