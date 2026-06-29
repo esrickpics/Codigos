@@ -108,9 +108,22 @@ PALDACA_STRICT_SESSION_CONSISTENCY = os.getenv(
     "true",
 )
 SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "paldaca_sessionid")
-SESSION_COOKIE_DOMAIN = os.getenv("SESSION_COOKIE_DOMAIN") or None
+_raw_cookie_domain = (os.getenv("SESSION_COOKIE_DOMAIN") or "").strip()
+SESSION_COOKIE_DOMAIN = (
+    f".{_raw_cookie_domain.lstrip('.')}" if _raw_cookie_domain else None
+)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = (
+    os.getenv("SESSION_COOKIE_SECURE", "true" if SESSION_COOKIE_DOMAIN else "false").lower()
+    == "true"
+)
+CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-if DEBUG:
+if DEBUG and not _raw_cookie_domain:
     SESSION_COOKIE_DOMAIN = None
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_DOMAIN = None
@@ -121,6 +134,14 @@ if DEBUG:
         "http://localhost:8001",
         "http://localhost:8002",
         "http://localhost:8003",
+    ]
+elif SESSION_COOKIE_DOMAIN:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://cpaldaca.com",
+        "https://www.cpaldaca.com",
+        "https://api.cpaldaca.com",
+        "https://codigos.cpaldaca.com",
+        "https://www.codigos.cpaldaca.com",
     ]
 
 LOGIN_URL = PALDACA_SSO_LOGIN_URL

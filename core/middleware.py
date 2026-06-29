@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import redirect
 
-from .session_logout import close_paldaca_session
+from .session_logout import apply_paldaca_cookie_clearance, close_paldaca_session
 
 
 class PaldacaSessionMiddleware:
@@ -73,8 +73,10 @@ class PaldacaSessionMiddleware:
         )
 
         if is_api_request:
-            return JsonResponse(
+            response = JsonResponse(
                 {"detail": "La sesion se cerro porque cambiaron tus permisos."},
                 status=401,
             )
-        return redirect(login_url)
+            return apply_paldaca_cookie_clearance(response)
+        response = redirect(login_url)
+        return apply_paldaca_cookie_clearance(response)
