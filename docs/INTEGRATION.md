@@ -201,10 +201,19 @@ De `key.env.example` y `settings.py`:
 
 - `DJANGO_SECRET_KEY` (**obligatoria**)
 - `SESSION_COOKIE_DOMAIN`, `SESSION_COOKIE_NAME`, `SESSION_COOKIE_SECURE`
+- **Ciclo de vida no configurado:** `SESSION_COOKIE_AGE`, `SESSION_EXPIRE_AT_BROWSER_CLOSE`, `SESSION_SAVE_EVERY_REQUEST` **ausentes** → defaults Django (2 semanas / no expira al cerrar). **Diverge del Portal (8 h / expire at close / sliding).**
 - `PALDACA_SSO_LOGIN_URL`, `PALDACA_SSO_LOGOUT_URL`
 - `PALDACA_STRICT_SESSION_CONSISTENCY`
 - `EMAIL_HOST_PASSWORD` (vía `correo.env`)
 - `MYSQL_*` aparecen en el ejemplo, **pero `codigos/db.py` activo no las lee** (inconsistencia).
+
+**Escritura en `core_usuario`:** no hay vistas CRUD de usuarios; solo admin Django y migración legacy `documentos/migrations/0007_migrate_auth_user_to_core.py`.
+
+**Permiso `documentos.puede_anular_codigo`:** definido en `Meta.permissions` del modelo / migración `0004`; **no hay código que lo asigne** a usuarios o grupos — solo se consulta (`has_perm` / template). En la práctica el flujo de aprobación también usa `es_administrador_en_modulo("codigos")` vía `es_aprobador_codigos`.
+
+**Locale:** `LANGUAGE_CODE = es-ve`, `TIME_ZONE = America/Caracas`.
+
+**Nav DEBUG:** assets en `http://127.0.0.1:8000/static/paldaca-nav.*` (no `localhost`) — riesgo de cookie SSO si se mezcla host.
 
 ---
 

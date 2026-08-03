@@ -19,10 +19,13 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 _key_env = BASE_DIR / "key.env"
+_dev_env = BASE_DIR / "dev.env"
 if _key_env.exists():
     load_dotenv(_key_env)
 else:
     load_dotenv(BASE_DIR / ".env" / "key.env")
+if _dev_env.exists():
+    load_dotenv(_dev_env, override=True)
 load_dotenv(dotenv_path=os.path.join(BASE_DIR, "correo.env"))
 LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -38,11 +41,18 @@ if not SECRET_KEY:
     )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Sin DJANGO_DEBUG: true solo si hay dev.env (local); en servidor queda false.
+DEBUG = os.getenv(
+    "DJANGO_DEBUG",
+    "true" if _dev_env.exists() else "false",
+).lower() == "true"
 
-ALLOWED_HOSTS = ['https://codigos.cpaldaca.com/', 'codigos.cpaldaca.com']
-
-#ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'codigos.cpaldaca.com',
+    'www.codigos.cpaldaca.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 # Application definition
 
@@ -64,9 +74,17 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Despues de Authentication (necesita request.user) y ANTES de
+    # PaldacaSessionMiddleware (que puede cortocircuitar y necesita saber si la
+    # peticion viene embebida). Su fase de respuesta corre despues de todos los
+    # de abajo, asi que tiene la ultima palabra sobre las cabeceras de framing.
+    'core.embed.PaldacaEmbedMiddleware',
     'core.middleware.PaldacaSessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # XFrameOptionsMiddleware retirado: emitia X-Frame-Options: DENY (default de
+    # Django al no definir X_FRAME_OPTIONS), lo que impide embeber el modulo en
+    # el shell del Portal. El control de framing lo hace ahora PaldacaEmbedMiddleware
+    # con CSP frame-ancestors, que si admite lista de origenes.
 ]
 
 ROOT_URLCONF = 'codigos.urls'
@@ -107,10 +125,47 @@ PALDACA_STRICT_SESSION_CONSISTENCY = os.getenv(
     "PALDACA_STRICT_SESSION_CONSISTENCY",
     "true",
 )
-SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "paldaca_sessionid")
-SESSION_COOKIE_DOMAIN = os.getenv("SESSION_COOKIE_DOMAIN") or None
 
+# --- Portal unificado: este modulo embebido en el shell ---------------------
+PALDACA_MODULO_CODIGO = "codigos"
+
+PALDACA_PORTAL_URL = (
+    (os.getenv("PALDACA_PORTAL_URL") or "").strip().rstrip("/")
+    or ("http://localhost:5173" if DEBUG else "https://cpaldaca.com")
+)
+
+PALDACA_SHELL_PATH = os.getenv("PALDACA_SHELL_PATH", "/codigos")
+
+_frame_ancestors = ["'self'", PALDACA_PORTAL_URL]
 if DEBUG:
+    _frame_ancestors += ["http://localhost:5173", "http://127.0.0.1:5173"]
+else:
+    _frame_ancestors += ["https://cpaldaca.com", "https://www.cpaldaca.com"]
+PALDACA_FRAME_ANCESTORS = os.getenv(
+    "PALDACA_FRAME_ANCESTORS",
+    " ".join(dict.fromkeys(a for a in _frame_ancestors if a)),
+)
+
+PALDACA_EMBED_REDIRECT_TO_SHELL = os.getenv(
+    "PALDACA_EMBED_REDIRECT_TO_SHELL",
+    "false",
+).lower() == "true"
+
+SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "paldaca_sessionid")
+_raw_cookie_domain = (os.getenv("SESSION_COOKIE_DOMAIN") or "").strip()
+SESSION_COOKIE_DOMAIN = (
+    f".{_raw_cookie_domain.lstrip('.')}" if _raw_cookie_domain else None
+)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = (
+    os.getenv("SESSION_COOKIE_SECURE", "true" if SESSION_COOKIE_DOMAIN else "false").lower()
+    == "true"
+)
+CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+
+if DEBUG and not _raw_cookie_domain:
     SESSION_COOKIE_DOMAIN = None
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_DOMAIN = None
@@ -121,6 +176,22 @@ if DEBUG:
         "http://localhost:8001",
         "http://localhost:8002",
         "http://localhost:8003",
+    ]
+elif SESSION_COOKIE_DOMAIN:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://cpaldaca.com",
+        "https://www.cpaldaca.com",
+        "https://api.cpaldaca.com",
+        "https://codigos.cpaldaca.com",
+        "https://www.codigos.cpaldaca.com",
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://cpaldaca.com",
+        "https://www.cpaldaca.com",
+        "https://api.cpaldaca.com",
+        "https://codigos.cpaldaca.com",
+        "https://www.codigos.cpaldaca.com",
     ]
 
 LOGIN_URL = PALDACA_SSO_LOGIN_URL
