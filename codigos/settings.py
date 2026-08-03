@@ -14,7 +14,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import logging
 from pathlib import Path
-from .db import MYSQL as DATABASES
+from .db import DATABASEDES, DATABASEPROD
 from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,10 +42,7 @@ if not SECRET_KEY:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Sin DJANGO_DEBUG: true solo si hay dev.env (local); en servidor queda false.
-DEBUG = os.getenv(
-    "DJANGO_DEBUG",
-    "true" if _dev_env.exists() else "false",
-).lower() == "true"
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'codigos.cpaldaca.com',
@@ -112,7 +109,8 @@ WSGI_APPLICATION = 'codigos.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = DATABASES
+# Local: existe dev.env → DATABASEDES. Producción (sin dev.env) → DATABASEPROD.
+DATABASES = DATABASEDES if _dev_env.exists() else DATABASEPROD
 
 AUTH_USER_MODEL = "core.UsuarioPaldaca"
 
