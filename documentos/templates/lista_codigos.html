@@ -11,7 +11,8 @@
     <thead>
       <tr>
         <th>Código</th>
-        <th>Usuario</th>
+        <th>Nombre</th>
+        <th>Apellido</th>
         <th>Fecha</th>
         <th>Asunto</th>
       </tr>
@@ -28,7 +29,8 @@
             {{ codigo.codigo }}
           {% endif %}
         </td>
-        <td>{{ codigo.usuario.username }}</td>
+        <td>{{ codigo.usuario.first_name|default:"—" }}</td>
+        <td>{{ codigo.usuario.last_name|default:"—" }}</td>
         <td>{{ codigo.fecha_creacion|date:"d/m/Y H:i" }}</td>
         <td>{{ codigo.motivo }}</td>
       </tr>
