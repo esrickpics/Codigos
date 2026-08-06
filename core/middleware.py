@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import redirect
 
+from .embed import embed_signal_response, is_embedded
 from .session_logout import apply_paldaca_cookie_clearance, close_paldaca_session
 
 
@@ -78,5 +79,12 @@ class PaldacaSessionMiddleware:
                 status=401,
             )
             return apply_paldaca_cookie_clearance(response)
+
+        # Dentro del shell, un redirect al login navegaria el propio iframe y el
+        # usuario veria el formulario de login incrustado en el area de trabajo.
+        if is_embedded(request):
+            response = embed_signal_response(request, "session-expired")
+            return apply_paldaca_cookie_clearance(response)
+
         response = redirect(login_url)
         return apply_paldaca_cookie_clearance(response)

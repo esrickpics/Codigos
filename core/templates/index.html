@@ -10,13 +10,14 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'img/PaldacaIcon.png' %}">
 
+    {% if paldaca_embedded %}{% include "includes/paldaca_embed.html" %}{% endif %}
     {% block extra_css %}{% endblock %}
 
     <title class="titulo">Generador de Códigos</title>
 </head>
 <body class="app-layout {% block body_class %}{% endblock %}">
 
-{% if user.is_authenticated %}
+{% if user.is_authenticated and not paldaca_embedded %}
 {% include "includes/paldaca_nav.html" %}
 {% endif %}
 

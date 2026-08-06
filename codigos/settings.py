@@ -14,15 +14,18 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import logging
 from pathlib import Path
-from .db import MYSQL as DATABASES
+from .db import DATABASEDES, DATABASEPROD
 from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 _key_env = BASE_DIR / "key.env"
+_dev_env = BASE_DIR / "dev.env"
 if _key_env.exists():
     load_dotenv(_key_env)
 else:
     load_dotenv(BASE_DIR / ".env" / "key.env")
+if _dev_env.exists():
+    load_dotenv(_dev_env, override=True)
 load_dotenv(dotenv_path=os.path.join(BASE_DIR, "correo.env"))
 LOG_DIR = BASE_DIR / 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -38,11 +41,15 @@ if not SECRET_KEY:
     )
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# Sin DJANGO_DEBUG: true solo si hay dev.env (local); en servidor queda false.
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://codigos.cpaldaca.com/', 'codigos.cpaldaca.com']
-
-#ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'codigos.cpaldaca.com',
+    'www.codigos.cpaldaca.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 # Application definition
 
@@ -64,9 +71,17 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Despues de Authentication (necesita request.user) y ANTES de
+    # PaldacaSessionMiddleware (que puede cortocircuitar y necesita saber si la
+    # peticion viene embebida). Su fase de respuesta corre despues de todos los
+    # de abajo, asi que tiene la ultima palabra sobre las cabeceras de framing.
+    'core.embed.PaldacaEmbedMiddleware',
     'core.middleware.PaldacaSessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # XFrameOptionsMiddleware retirado: emitia X-Frame-Options: DENY (default de
+    # Django al no definir X_FRAME_OPTIONS), lo que impide embeber el modulo en
+    # el shell del Portal. El control de framing lo hace ahora PaldacaEmbedMiddleware
+    # con CSP frame-ancestors, que si admite lista de origenes.
 ]
 
 ROOT_URLCONF = 'codigos.urls'
@@ -94,7 +109,8 @@ WSGI_APPLICATION = 'codigos.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = DATABASES
+# Local: existe dev.env → DATABASEDES. Producción (sin dev.env) → DATABASEPROD.
+DATABASES = DATABASEDES if _dev_env.exists() else DATABASEPROD
 
 AUTH_USER_MODEL = "core.UsuarioPaldaca"
 
@@ -107,6 +123,32 @@ PALDACA_STRICT_SESSION_CONSISTENCY = os.getenv(
     "PALDACA_STRICT_SESSION_CONSISTENCY",
     "true",
 )
+
+# --- Portal unificado: este modulo embebido en el shell ---------------------
+PALDACA_MODULO_CODIGO = "codigos"
+
+PALDACA_PORTAL_URL = (
+    (os.getenv("PALDACA_PORTAL_URL") or "").strip().rstrip("/")
+    or ("http://localhost:5173" if DEBUG else "https://cpaldaca.com")
+)
+
+PALDACA_SHELL_PATH = os.getenv("PALDACA_SHELL_PATH", "/codigos")
+
+_frame_ancestors = ["'self'", PALDACA_PORTAL_URL]
+if DEBUG:
+    _frame_ancestors += ["http://localhost:5173", "http://127.0.0.1:5173"]
+else:
+    _frame_ancestors += ["https://cpaldaca.com", "https://www.cpaldaca.com"]
+PALDACA_FRAME_ANCESTORS = os.getenv(
+    "PALDACA_FRAME_ANCESTORS",
+    " ".join(dict.fromkeys(a for a in _frame_ancestors if a)),
+)
+
+PALDACA_EMBED_REDIRECT_TO_SHELL = os.getenv(
+    "PALDACA_EMBED_REDIRECT_TO_SHELL",
+    "false",
+).lower() == "true"
+
 SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "paldaca_sessionid")
 _raw_cookie_domain = (os.getenv("SESSION_COOKIE_DOMAIN") or "").strip()
 SESSION_COOKIE_DOMAIN = (
@@ -120,8 +162,6 @@ SESSION_COOKIE_SECURE = (
 )
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if DEBUG and not _raw_cookie_domain:
     SESSION_COOKIE_DOMAIN = None
@@ -136,6 +176,14 @@ if DEBUG and not _raw_cookie_domain:
         "http://localhost:8003",
     ]
 elif SESSION_COOKIE_DOMAIN:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://cpaldaca.com",
+        "https://www.cpaldaca.com",
+        "https://api.cpaldaca.com",
+        "https://codigos.cpaldaca.com",
+        "https://www.codigos.cpaldaca.com",
+    ]
+else:
     CSRF_TRUSTED_ORIGINS = [
         "https://cpaldaca.com",
         "https://www.cpaldaca.com",
