@@ -14,7 +14,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import logging
 from pathlib import Path
-from .db import DATABASEDES, DATABASEPROD
+from .db import get_databases
 from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,23 +33,48 @@ os.makedirs(LOG_DIR, exist_ok=True)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "").strip()
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", os.getenv("SECRET_KEY", "")).strip()
 if not SECRET_KEY:
     raise ValueError(
-        "DJANGO_SECRET_KEY no definida. Copia key.env desde Portal-Paldaca "
-        "(misma clave y MYSQL_*) a la raiz de Codigos."
+        "DJANGO_SECRET_KEY no definida. En Coolify configúrala como variable "
+        "de entorno; en local copia key.env desde Portal-Paldaca "
+        "(misma clave y MYSQL_*)."
     )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# Sin DJANGO_DEBUG: true solo si hay dev.env (local); en servidor queda false.
-DEBUG = True
 
-ALLOWED_HOSTS = [
-    'codigos.cpaldaca.com',
-    'www.codigos.cpaldaca.com',
-    'localhost',
-    '127.0.0.1',
+def _csv_env(*names: str, default: str = "") -> list[str]:
+    for name in names:
+        raw = os.getenv(name)
+        if raw is not None and raw.strip():
+            return [item.strip() for item in raw.split(",") if item.strip()]
+    return [item.strip() for item in default.split(",") if item.strip()]
+
+
+def _env_flag(*names: str, default: bool = False) -> bool:
+    for name in names:
+        raw = os.getenv(name)
+        if raw is not None and str(raw).strip():
+            return str(raw).strip().lower() in ("1", "true", "yes", "on")
+    return default
+
+
+# SECURITY WARNING: don't run with debug turned on in production!
+# Sin DJANGO_DEBUG/DEBUG: true solo si hay dev.env (local); en servidor queda false.
+DEBUG = _env_flag("DJANGO_DEBUG", "DEBUG", default=_dev_env.exists())
+
+_default_hosts = [
+    "codigos.cpaldaca.com",
+    "www.codigos.cpaldaca.com",
+    "localhost",
+    "127.0.0.1",
 ]
+ALLOWED_HOSTS = _csv_env("ALLOWED_HOSTS", "DJANGO_ALLOWED_HOSTS") or _default_hosts
+for _coolify_host in (
+    os.getenv("COOLIFY_FQDN", "").strip(),
+    os.getenv("SERVICE_FQDN", "").strip(),
+):
+    if _coolify_host and _coolify_host not in ALLOWED_HOSTS and "*" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_coolify_host)
 
 # Application definition
 
@@ -67,6 +92,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -109,8 +135,8 @@ WSGI_APPLICATION = 'codigos.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Local: existe dev.env → DATABASEDES. Producción (sin dev.env) → DATABASEPROD.
-DATABASES = DATABASEDES if _dev_env.exists() else DATABASEPROD
+# DATABASE_URL (MySQL compartida en Coolify) tiene prioridad; si no, MYSQL_*.
+DATABASES = get_databases()
 
 AUTH_USER_MODEL = "core.UsuarioPaldaca"
 
@@ -162,6 +188,16 @@ SESSION_COOKIE_SECURE = (
 )
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+_default_csrf = [
+    "https://cpaldaca.com",
+    "https://www.cpaldaca.com",
+    "https://api.cpaldaca.com",
+    "https://codigos.cpaldaca.com",
+    "https://www.codigos.cpaldaca.com",
+]
 
 if DEBUG and not _raw_cookie_domain:
     SESSION_COOKIE_DOMAIN = None
@@ -174,23 +210,19 @@ if DEBUG and not _raw_cookie_domain:
         "http://localhost:8001",
         "http://localhost:8002",
         "http://localhost:8003",
-    ]
-elif SESSION_COOKIE_DOMAIN:
-    CSRF_TRUSTED_ORIGINS = [
-        "https://cpaldaca.com",
-        "https://www.cpaldaca.com",
-        "https://api.cpaldaca.com",
-        "https://codigos.cpaldaca.com",
-        "https://www.codigos.cpaldaca.com",
+        "http://localhost:8084",
+        "http://127.0.0.1:8084",
     ]
 else:
-    CSRF_TRUSTED_ORIGINS = [
-        "https://cpaldaca.com",
-        "https://www.cpaldaca.com",
-        "https://api.cpaldaca.com",
-        "https://codigos.cpaldaca.com",
-        "https://www.codigos.cpaldaca.com",
-    ]
+    CSRF_TRUSTED_ORIGINS = list(_default_csrf)
+
+_csrf_extra = _csv_env("CSRF_TRUSTED_ORIGINS")
+for origin in _csrf_extra:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+_coolify_url = (os.getenv("COOLIFY_URL") or "").strip().rstrip("/")
+if _coolify_url and _coolify_url not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(_coolify_url)
 
 LOGIN_URL = PALDACA_SSO_LOGIN_URL
 LOGOUT_REDIRECT_URL = PALDACA_SSO_LOGOUT_URL
@@ -240,10 +272,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [ BASE_DIR / "documentos" / "static" ]
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
