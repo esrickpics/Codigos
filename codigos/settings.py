@@ -67,6 +67,7 @@ _default_hosts = [
     "www.codigos.cpaldaca.com",
     "localhost",
     "127.0.0.1",
+    ".cereipo.com",
 ]
 ALLOWED_HOSTS = _csv_env("ALLOWED_HOSTS", "DJANGO_ALLOWED_HOSTS") or _default_hosts
 for _coolify_host in (
@@ -75,6 +76,8 @@ for _coolify_host in (
 ):
     if _coolify_host and _coolify_host not in ALLOWED_HOSTS and "*" not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_coolify_host)
+if "*" not in ALLOWED_HOSTS and ".cereipo.com" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".cereipo.com")
 
 # Application definition
 
@@ -197,6 +200,10 @@ _default_csrf = [
     "https://api.cpaldaca.com",
     "https://codigos.cpaldaca.com",
     "https://www.codigos.cpaldaca.com",
+    "https://cereipo.com",
+    "https://www.cereipo.com",
+    "https://codigos.cereipo.com",
+    "https://www.codigos.cereipo.com",
 ]
 
 if DEBUG and not _raw_cookie_domain:
@@ -223,6 +230,16 @@ for origin in _csrf_extra:
 _coolify_url = (os.getenv("COOLIFY_URL") or "").strip().rstrip("/")
 if _coolify_url and _coolify_url not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(_coolify_url)
+
+_CEREIPO_CSRF_ORIGINS = (
+    "https://cereipo.com",
+    "https://www.cereipo.com",
+    "https://codigos.cereipo.com",
+    "https://www.codigos.cereipo.com",
+)
+for _origin in _CEREIPO_CSRF_ORIGINS:
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
 
 LOGIN_URL = PALDACA_SSO_LOGIN_URL
 LOGOUT_REDIRECT_URL = PALDACA_SSO_LOGOUT_URL

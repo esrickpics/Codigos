@@ -10,7 +10,7 @@ services:
       DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-codigos.cpaldaca.com,www.codigos.cpaldaca.com}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-codigos.cpaldaca.com,www.codigos.cpaldaca.com}
-      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://codigos.cpaldaca.com,https://www.codigos.cpaldaca.com,https://cpaldaca.com,https://www.cpaldaca.com}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://codigos.cpaldaca.com,https://www.codigos.cpaldaca.com,https://cpaldaca.com,https://www.cpaldaca.com,https://cereipo.com,https://www.cereipo.com,https://codigos.cereipo.com,https://www.codigos.cereipo.com}
       SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:-.cpaldaca.com}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
       SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-paldaca_sessionid}
