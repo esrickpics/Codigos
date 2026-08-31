@@ -15,21 +15,20 @@
         </tr>
     </thead>
     <tbody>
-        {% if anulaciones %}
         {% for cod in anulaciones %}
             <tr>
             <td><del>{{ cod.codigo }}</del></td>
             <td>{{ cod.fecha_anulacion|date:"d/m/Y H:i" }}</td>
             <td>{{ cod.usuario_anulacion.username }}</td>
             </tr>
-        {% endfor %}
-        {% else %}
+        {% empty %}
         <tr>
             <td colspan="3" class="text-center">No hay códigos anulados registrados.</td>
         </tr>
-        {% endif %}
+        {% endfor %}
     </tbody>
     </table>
   </div>
+  {% include "includes/pagination.html" with page_obj=anulaciones %}
 </div>
 {% endblock %}

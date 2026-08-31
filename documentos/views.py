@@ -1,21 +1,30 @@
-from django.shortcuts import render, redirect, get_object_or_404
-import logging
-from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
-from django.urls import reverse
-from django.core.mail import BadHeaderError, EmailMultiAlternatives
-from .forms import CodigoForm, BusquedaCodigoForm
-from .models import CodigoGenerado, SolicitudAnulacion
-from django.db import IntegrityError
-from django.contrib import messages
-from .decorators import requiere_modulo_paldaca
-from .permissions import es_aprobador_codigos
 from datetime import datetime, timedelta
+import logging
+
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.core.mail import BadHeaderError, EmailMultiAlternatives
+from django.core.paginator import Paginator
+from django.db import IntegrityError
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.utils.timezone import now, localtime
+from django.urls import reverse
 from django.utils.encoding import force_str
+from django.utils.timezone import localtime, now
+
+from .decorators import requiere_modulo_paldaca
+from .forms import BusquedaCodigoForm, CodigoForm
+from .models import CodigoGenerado, SolicitudAnulacion
+from .permissions import es_aprobador_codigos
 
 logger = logging.getLogger('documentos')
+
+LIST_PAGE_SIZE = 25
+
+
+def _page(request, queryset, page_size=LIST_PAGE_SIZE):
+    return Paginator(queryset, page_size).get_page(request.GET.get("page"))
 
 
 def _calcular_codigo_y_consecutivo(cleaned_data):
@@ -343,7 +352,9 @@ def buscar_codigo(request):
         incluir_anulados = request.GET.get('ver_anulados') == 'on'
         if not incluir_anulados:
             resultados = resultados.filter(anulado=False)
+        resultados = resultados.select_related('usuario').order_by('-fecha_creacion')
         logger.info("Busqueda avanzada usuario=%s total_resultados=%s", request.user.username, resultados.count())
+        resultados = _page(request, resultados)
 
     return render(request, 'buscar_codigo.html', {
         'form': form,
@@ -354,19 +365,20 @@ def lista_codigos(request):
     mostrar_todos = request.GET.get('todos')
 
     codigos = CodigoGenerado.objects.select_related('usuario').order_by('-fecha_creacion')
-    if not mostrar_todos:
-        codigos = codigos[:15]
+    page_size = LIST_PAGE_SIZE if mostrar_todos else 15
+    codigos = _page(request, codigos, page_size=page_size)
 
-    # Obtener las solicitudes de anulación pendientes del usuario actual
-    solicitudes_pendientes = SolicitudAnulacion.objects.filter(
-        solicitante=request.user,
-        procesada=False
-    ).values_list('codigo_id', flat=True)
+    solicitudes_pendientes = list(
+        SolicitudAnulacion.objects.filter(
+            solicitante=request.user,
+            procesada=False
+        ).values_list('codigo_id', flat=True)
+    )
 
     return render(request, 'lista_codigos.html', {
         'codigos': codigos,
         'mostrar_todos': mostrar_todos,
-        'solicitudes_pendientes': list(solicitudes_pendientes)  # Pasamos como lista para JS
+        'solicitudes_pendientes': solicitudes_pendientes,
     })
 
 
@@ -377,7 +389,7 @@ def anular_codigo(request, codigo_id):
             codigo = CodigoGenerado.objects.get(id=codigo_id)
 
             # Solo aprobadores o el mismo usuario
-            if request.user == codigo.usuario or es_aprobador_codigos(request.user):
+            if request.user == codigo.usuario or es_aprobador_codigos(request.user, request):
                 if not codigo.anulado:
                     codigo.anulado = True
                     codigo.usuario_anulacion = request.user
@@ -443,12 +455,20 @@ def solicitar_anulacion(request, codigo_id):
 
 @requiere_modulo_paldaca
 def historial_anulaciones(request):
-    anulaciones = CodigoGenerado.objects.filter(anulado=True).order_by('-fecha_anulacion')
-    return render(request, 'historial_anulaciones.html', {'anulaciones': anulaciones})
+    anulaciones = (
+        CodigoGenerado.objects.filter(anulado=True)
+        .select_related("usuario_anulacion")
+        .order_by("-fecha_anulacion")
+    )
+    return render(
+        request,
+        "historial_anulaciones.html",
+        {"anulaciones": _page(request, anulaciones)},
+    )
 
 @requiere_modulo_paldaca
 def solicitudes_anulacion_view(request):
-    if not es_aprobador_codigos(request.user):
+    if not es_aprobador_codigos(request.user, request):
         logger.warning("Acceso denegado solicitudes_anulacion usuario=%s", request.user.username)
         return mostrar_error(request, mensaje="No tienes permiso para acceder a esta página.", codigo=403)
     
@@ -482,10 +502,17 @@ def solicitudes_anulacion_view(request):
 
         return redirect('solicitudes_anulacion')
 
-    solicitudes = SolicitudAnulacion.objects.select_related('codigo', 'solicitante') \
-                    .filter(procesada=False).order_by('-fecha_solicitud')
+    solicitudes = (
+        SolicitudAnulacion.objects.select_related("codigo", "solicitante")
+        .filter(procesada=False)
+        .order_by("-fecha_solicitud")
+    )
 
-    return render(request, 'solicitudes_anulacion.html', {'solicitudes': solicitudes})
+    return render(
+        request,
+        "solicitudes_anulacion.html",
+        {"solicitudes": _page(request, solicitudes)},
+    )
 
 def mostrar_error(request, mensaje="Ha ocurrido un error", codigo=400):
     return render(request, 'error.html', {

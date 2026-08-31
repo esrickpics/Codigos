@@ -8,11 +8,20 @@ class BusquedaCodigoForm(forms.Form):
     codigo = forms.CharField(label='Código', required=False)
     usuario = forms.ModelChoiceField(
         label='Usuario',
-        queryset=get_user_model().objects.all(),
+        queryset=get_user_model().objects.none(),
         required=False,
     )
     fecha_inicio = forms.DateField(label='Desde', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     fecha_fin = forms.DateField(label='Hasta', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user_model = get_user_model()
+        self.fields["usuario"].queryset = (
+            user_model.objects.filter(codigos_generados__isnull=False)
+            .distinct()
+            .order_by("username")
+        )
 
 class CodigoForm(forms.Form):
     AÑOS = [(str(a), str(a)) for a in range(2020, datetime.now().year + 2)]

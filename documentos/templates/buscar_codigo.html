@@ -19,7 +19,8 @@
     <button type="submit" class="btn btn-primary">Buscar</button>
 </form>
 
-{% if resultados %}
+{% if request.GET %}
+    {% if resultados and resultados.object_list %}
     <h3 class="section-heading">Resultados encontrados</h3>
     <div class="table-responsive">
     <table class="table table-striped table-hover mt-3">
@@ -49,8 +50,10 @@
         </tbody>
     </table>
     </div>
-{% elif request.GET %}
+    {% include "includes/pagination.html" with page_obj=resultados %}
+    {% else %}
     <div class="alert alert-info mt-3">No se encontraron resultados.</div>
+    {% endif %}
 {% endif %}
 </div>
 {% endblock %}

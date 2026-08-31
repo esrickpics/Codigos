@@ -41,6 +41,7 @@
       </tbody>
     </table>
     </div>
+    {% include "includes/pagination.html" with page_obj=solicitudes %}
   {% else %}
     <div class="alert alert-info mt-4">No hay solicitudes pendientes.</div>
   {% endif %}

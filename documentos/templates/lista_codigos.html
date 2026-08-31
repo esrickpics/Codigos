@@ -38,6 +38,7 @@
     </tbody>
   </table>
 </div>
+{% include "includes/pagination.html" with page_obj=codigos %}
 {% if not mostrar_todos %}
   <div class="content-actions">
     <a href="?todos=1" class="btn btn-secondary mt-3">Ver todos</a>
@@ -48,7 +49,7 @@
 <!-- Menú contextual -->
 <div id="context-menu" class="card shadow" style="display: none; position: absolute; z-index: 1000;">
   <ul class="list-group list-group-flush">
-    {% if perms.documentos.puede_anular_codigo %}
+    {% if is_aprobador %}
       <li class="list-group-item text-danger" id="anular-codigo" style="cursor: pointer;">Anular código</li>
     {% else %}
       <li class="list-group-item text-warning" id="solicitar-anulacion" style="cursor: pointer;">Solicitar anulación</li>
@@ -76,6 +77,7 @@
 </div>
 
 <script>
+const solicitudesPendientes = {{ solicitudes_pendientes|safe }};
 let codigoSeleccionado = null;
 
 function mostrarMenu(e, row) {
@@ -88,12 +90,10 @@ function mostrarMenu(e, row) {
   menu.style.display = "block";
 }
 
-// Ocultar el menú si se hace clic fuera
 document.addEventListener("click", function () {
   document.getElementById("context-menu").style.display = "none";
 });
 
-// Acción al hacer clic en "Anular código"
 document.getElementById("anular-codigo")?.addEventListener("click", function (e) {
   e.preventDefault();
   if (codigoSeleccionado) {
@@ -103,28 +103,29 @@ document.getElementById("anular-codigo")?.addEventListener("click", function (e)
 });
 
 document.getElementById("confirmarAnulacionBtn")?.addEventListener("click", function () {
-  if (codigoSeleccionado) {
-    fetch(`/anular_codigo/${codigoSeleccionado}/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken")
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        location.reload();
-      } else {
-        alert(data.error || "No se pudo anular el código.");
-      }
-    });
-  }
+  if (!codigoSeleccionado) return;
+  fetch(`/anular_codigo/${codigoSeleccionado}/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.error || "No se pudo anular el código.");
+    }
+  });
 });
 
-// ✅ NUEVA FUNCIÓN: Solicitar anulación (para usuarios no aprobadores)
 document.getElementById("solicitar-anulacion")?.addEventListener("click", function () {
   if (!codigoSeleccionado) return;
-
+  if (solicitudesPendientes.includes(parseInt(codigoSeleccionado, 10))) {
+    alert("Ya has solicitado la anulación de este código. Espera a que sea procesada.");
+    return;
+  }
   const motivo = prompt("Ingrese el motivo de la solicitud de anulación:");
   if (motivo && motivo.trim() !== "") {
     fetch(`/solicitar_anulacion/${codigoSeleccionado}/`, {
@@ -147,7 +148,6 @@ document.getElementById("solicitar-anulacion")?.addEventListener("click", functi
   }
 });
 
-// Función para obtener CSRF token
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
@@ -162,41 +162,6 @@ function getCookie(name) {
   }
   return cookieValue;
 }
-
-  document.getElementById("solicitar-anulacion")?.addEventListener("click", function () {
-    if (!codigoSeleccionado) return;
-
-    // Evitar solicitudes duplicadas
-    if (solicitudesPendientes.includes(parseInt(codigoSeleccionado))) {
-        alert("Ya has solicitado la anulación de este código. Espera a que sea procesada.");
-        return;
-    }
-
-    const motivo = prompt("Ingrese el motivo de la solicitud de anulación:");
-    if (motivo && motivo.trim() !== "") {
-        fetch(`/solicitar_anulacion/${codigoSeleccionado}/`, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": getCookie("csrftoken"),
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({ motivo: motivo })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert("Solicitud enviada correctamente.");
-                location.reload();
-            } else {
-                alert(data.error || "No se pudo enviar la solicitud.");
-            }
-        });
-    }
-});
-
-
-
-
 </script>
 
 {% endblock %}

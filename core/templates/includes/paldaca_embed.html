@@ -87,6 +87,11 @@
       }, CANCEL_LOADING_MS);
     }
 
+    window.paldacaEmbed = {
+      notifyLoading: notifyLoading,
+      sendReady: sendReady,
+    };
+
     document.addEventListener(
       "click",
       function (event) {
@@ -96,7 +101,7 @@
         var link = event.target && event.target.closest ? event.target.closest("a") : null;
         if (!link || !link.href) return;
         if (link.target && link.target !== "_self") return;
-        if (link.hasAttribute("download")) return;
+        if (link.hasAttribute("download") || link.hasAttribute("data-skip-embed-loading")) return;
         // Drawers/modales Bootstrap o triggers JS: no hay navegacion real.
         if (
           link.getAttribute("data-bs-toggle") ||
@@ -132,6 +137,13 @@
     document.addEventListener(
       "submit",
       function (event) {
+        var form = event.target;
+        if (form && form.getAttribute && (
+          form.getAttribute("target") === "_blank" ||
+          form.hasAttribute("data-skip-embed-loading")
+        )) return;
+        var submitter = event.submitter;
+        if (submitter && submitter.getAttribute && submitter.getAttribute("formtarget") === "_blank") return;
         window.setTimeout(function () {
           if (event.defaultPrevented) return;
           notifyLoading();

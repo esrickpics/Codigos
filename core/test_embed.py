@@ -90,3 +90,26 @@ class EmbedContractTests(TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertIn("paldaca-nav-root", res.content.decode())
+
+    def test_sesion_expirada_en_iframe_emite_session_expired(self):
+        guest = Client()
+        res = guest.get("/", headers={"sec-fetch-dest": "iframe"})
+
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('type: "session-expired"', res.content.decode())
+        self.assertNotIn("paldaca-nav-root", res.content.decode())
+
+    def test_sin_acceso_en_iframe_emite_forbidden(self):
+        user_model = get_user_model()
+        outsider = user_model.objects.create_user(
+            username="pytest_outsider_codigos",
+            email="outsider-codigos@example.com",
+            password="test-pass-123",
+        )
+        client = Client()
+        client.force_login(outsider)
+        res = client.get("/", headers={"sec-fetch-dest": "iframe"})
+
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('type: "forbidden"', res.content.decode())
+        self.assertNotIn("paldaca-nav-root", res.content.decode())

@@ -53,6 +53,22 @@ class CodigoGenerado(models.Model):
 
     class Meta:
         db_table = TABLA("codigo_generado")
+        indexes = [
+            models.Index(fields=["-fecha_creacion"], name="codigos_fecha_creacion_idx"),
+            models.Index(fields=["anulado", "-fecha_anulacion"], name="codigos_anulado_fecha_idx"),
+            models.Index(
+                fields=[
+                    "empresa",
+                    "año",
+                    "numero_proyecto",
+                    "subproyecto",
+                    "departamento",
+                    "disciplina",
+                    "tipo_documento",
+                ],
+                name="codigos_consecutivo_lookup_idx",
+            ),
+        ]
 
     def __str__(self):
         return self.codigo + " by " + str(self.usuario)
@@ -71,6 +87,13 @@ class SolicitudAnulacion(models.Model):
 
     class Meta:
         db_table = TABLA("solicitud_anulacion")
+        indexes = [
+            models.Index(
+                fields=["solicitante", "procesada"],
+                name="codigos_sol_pendiente_idx",
+            ),
+            models.Index(fields=["procesada", "-fecha_solicitud"], name="codigos_sol_fecha_idx"),
+        ]
         permissions = [
             ("puede_anular_codigo", "Puede anular códigos"),
         ]

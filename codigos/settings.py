@@ -95,6 +95,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.performance.DevelopmentPerformanceMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -272,6 +273,7 @@ EMAIL_USE_TLS = False        # ❌ TLS debe estar desactivado si usas SSL
 EMAIL_HOST_USER = 'admin@codigos.cpaldaca.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # Se carga desde correo.env
 DEFAULT_FROM_EMAIL = 'admin@codigos.cpaldaca.com'
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '8'))
 #print('PASS:', os.getenv('EMAIL_HOST_PASSWORD'))
 
 # Internationalization
@@ -357,6 +359,11 @@ LOGGING = {
         },
         'core': {
             'handlers': ['console', 'app_file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'paldaca.performance': {
+            'handlers': ['console', 'app_file'],
             'level': 'INFO',
             'propagate': False,
         },

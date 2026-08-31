@@ -39,5 +39,5 @@ def paldaca_urls(request):
 
 def navigation_context(request):
     return {
-        "is_aprobador": es_aprobador_codigos(request.user),
+        "is_aprobador": es_aprobador_codigos(request.user, request),
     }
