@@ -20,6 +20,10 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
+handler500 = "core.error_views.custom_500"
+handler404 = "core.error_views.custom_404"
+handler403 = "core.error_views.custom_403"
+
 
 def healthz(_request):
     return HttpResponse("ok", content_type="text/plain")
